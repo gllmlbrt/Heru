@@ -38,5 +38,4 @@ Home Assistant custom integration for older generation 3 HERU Östberg ventilati
 
 This integration is based on:
 
-- `/home/runner/work/Heru/Heru/Assets/Modbus_Registers_HERU_62_250_v07.pdf`
 - `Assets/Modbus_Registers_HERU_62_250_v07.pdf`

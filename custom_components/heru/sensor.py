@@ -7,14 +7,16 @@ from typing import Callable
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfPressure, UnitOfTemperature, UnitOfTime
+from homeassistant.const import PERCENTAGE, UnitOfElectricPotential, UnitOfPressure, UnitOfTemperature, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, INPUT_REGISTER_ROOM_TEMPERATURE
 from .coordinator import HeruDataUpdateCoordinator
+
+RPM = "rpm"
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -23,7 +25,12 @@ class HeruSensorDescription(SensorEntityDescription):
 
     register_index: int
     scale: float = 1.0
-    value_fn: Callable[[int], int | float] | None = None
+    value_fn: Callable[[int], int | float | str | None] | None = None
+
+
+def _fan_speed_option(value: int) -> str | None:
+    """Map fan speed integer to enum option."""
+    return {0: "off", 1: "min", 2: "std", 3: "mod", 4: "max"}.get(value)
 
 
 SENSOR_DESCRIPTIONS: tuple[HeruSensorDescription, ...] = (
@@ -34,7 +41,7 @@ SENSOR_DESCRIPTIONS: tuple[HeruSensorDescription, ...] = (
     HeruSensorDescription(key="waste_air_temperature", translation_key="waste_air_temperature", register_index=4, device_class=SensorDeviceClass.TEMPERATURE, native_unit_of_measurement=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="water_temperature", translation_key="water_temperature", register_index=5, device_class=SensorDeviceClass.TEMPERATURE, native_unit_of_measurement=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="heat_recovery_wheel_temperature", translation_key="heat_recovery_wheel_temperature", register_index=6, device_class=SensorDeviceClass.TEMPERATURE, native_unit_of_measurement=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT),
-    HeruSensorDescription(key="room_temperature", translation_key="room_temperature", register_index=7, device_class=SensorDeviceClass.TEMPERATURE, native_unit_of_measurement=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT),
+    HeruSensorDescription(key="room_temperature", translation_key="room_temperature", register_index=INPUT_REGISTER_ROOM_TEMPERATURE, device_class=SensorDeviceClass.TEMPERATURE, native_unit_of_measurement=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="supply_pressure", translation_key="supply_pressure", register_index=11, scale=0.1, device_class=SensorDeviceClass.PRESSURE, native_unit_of_measurement=UnitOfPressure.PA, state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="exhaust_pressure", translation_key="exhaust_pressure", register_index=12, scale=0.1, device_class=SensorDeviceClass.PRESSURE, native_unit_of_measurement=UnitOfPressure.PA, state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="relative_humidity", translation_key="relative_humidity", register_index=13, scale=0.1, device_class=SensorDeviceClass.HUMIDITY, native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT),
@@ -43,18 +50,18 @@ SENSOR_DESCRIPTIONS: tuple[HeruSensorDescription, ...] = (
     HeruSensorDescription(key="sensors_shorted", translation_key="sensors_shorted", register_index=18, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="filter_days_left", translation_key="filter_days_left", register_index=19, device_class=SensorDeviceClass.DURATION, native_unit_of_measurement=UnitOfTime.DAYS, state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="current_weektimer_program", translation_key="current_weektimer_program", register_index=20),
-    HeruSensorDescription(key="current_fan_speed", translation_key="current_fan_speed", register_index=21, value_fn=lambda value: {0: "off", 1: "min", 2: "std", 3: "mod", 4: "max"}.get(value, str(value)), device_class=SensorDeviceClass.ENUM, options=["off", "min", "std", "mod", "max"]),
-    HeruSensorDescription(key="current_supply_fan_step", translation_key="current_supply_fan_step", register_index=22, value_fn=lambda value: {0: "off", 1: "min", 2: "std", 3: "mod", 4: "max"}.get(value, str(value)), device_class=SensorDeviceClass.ENUM, options=["off", "min", "std", "mod", "max"]),
-    HeruSensorDescription(key="current_exhaust_fan_step", translation_key="current_exhaust_fan_step", register_index=23, value_fn=lambda value: {0: "off", 1: "min", 2: "std", 3: "mod", 4: "max"}.get(value, str(value)), device_class=SensorDeviceClass.ENUM, options=["off", "min", "std", "mod", "max"]),
+    HeruSensorDescription(key="current_fan_speed", translation_key="current_fan_speed", register_index=21, value_fn=_fan_speed_option, device_class=SensorDeviceClass.ENUM, options=["off", "min", "std", "mod", "max"]),
+    HeruSensorDescription(key="current_supply_fan_step", translation_key="current_supply_fan_step", register_index=22, value_fn=_fan_speed_option, device_class=SensorDeviceClass.ENUM, options=["off", "min", "std", "mod", "max"]),
+    HeruSensorDescription(key="current_exhaust_fan_step", translation_key="current_exhaust_fan_step", register_index=23, value_fn=_fan_speed_option, device_class=SensorDeviceClass.ENUM, options=["off", "min", "std", "mod", "max"]),
     HeruSensorDescription(key="current_supply_fan_power", translation_key="current_supply_fan_power", register_index=24, native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="current_exhaust_fan_power", translation_key="current_exhaust_fan_power", register_index=25, native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT),
-    HeruSensorDescription(key="current_supply_fan_speed_rpm", translation_key="current_supply_fan_speed_rpm", register_index=26, native_unit_of_measurement="rpm", state_class=SensorStateClass.MEASUREMENT),
-    HeruSensorDescription(key="current_exhaust_fan_speed_rpm", translation_key="current_exhaust_fan_speed_rpm", register_index=27, native_unit_of_measurement="rpm", state_class=SensorStateClass.MEASUREMENT),
-    HeruSensorDescription(key="current_heating_power", translation_key="current_heating_power", register_index=28, state_class=SensorStateClass.MEASUREMENT),
-    HeruSensorDescription(key="current_heat_cold_recovery_power", translation_key="current_heat_cold_recovery_power", register_index=29, state_class=SensorStateClass.MEASUREMENT),
-    HeruSensorDescription(key="current_cooling_power", translation_key="current_cooling_power", register_index=30, state_class=SensorStateClass.MEASUREMENT),
-    HeruSensorDescription(key="supply_fan_control_voltage", translation_key="supply_fan_control_voltage", register_index=31, scale=0.1, native_unit_of_measurement="V", state_class=SensorStateClass.MEASUREMENT),
-    HeruSensorDescription(key="exhaust_fan_control_voltage", translation_key="exhaust_fan_control_voltage", register_index=32, scale=0.1, native_unit_of_measurement="V", state_class=SensorStateClass.MEASUREMENT),
+    HeruSensorDescription(key="current_supply_fan_speed_rpm", translation_key="current_supply_fan_speed_rpm", register_index=26, native_unit_of_measurement=RPM, state_class=SensorStateClass.MEASUREMENT),
+    HeruSensorDescription(key="current_exhaust_fan_speed_rpm", translation_key="current_exhaust_fan_speed_rpm", register_index=27, native_unit_of_measurement=RPM, state_class=SensorStateClass.MEASUREMENT),
+    HeruSensorDescription(key="current_heating_power", translation_key="current_heating_power", register_index=28),
+    HeruSensorDescription(key="current_heat_cold_recovery_power", translation_key="current_heat_cold_recovery_power", register_index=29),
+    HeruSensorDescription(key="current_cooling_power", translation_key="current_cooling_power", register_index=30),
+    HeruSensorDescription(key="supply_fan_control_voltage", translation_key="supply_fan_control_voltage", register_index=31, scale=0.1, native_unit_of_measurement=UnitOfElectricPotential.VOLT, state_class=SensorStateClass.MEASUREMENT),
+    HeruSensorDescription(key="exhaust_fan_control_voltage", translation_key="exhaust_fan_control_voltage", register_index=32, scale=0.1, native_unit_of_measurement=UnitOfElectricPotential.VOLT, state_class=SensorStateClass.MEASUREMENT),
 )
 
 

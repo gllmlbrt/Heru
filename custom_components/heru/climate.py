@@ -5,13 +5,14 @@ from __future__ import annotations
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import ClimateEntityFeature, HVACMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     DOMAIN,
+    INPUT_REGISTER_ROOM_TEMPERATURE,
     HOLDING_REGISTER_TEMPERATURE_SETPOINT,
     HOLDING_REGISTER_USER_FAN_SPEED,
 )
@@ -50,6 +51,7 @@ class HeruClimateEntity(CoordinatorEntity[HeruDataUpdateCoordinator], ClimateEnt
         """Initialize climate entity."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_climate"
+        self._last_nonzero_fan_speed = 2
 
     @property
     def device_info(self):
@@ -59,27 +61,30 @@ class HeruClimateEntity(CoordinatorEntity[HeruDataUpdateCoordinator], ClimateEnt
     @property
     def current_temperature(self) -> float | None:
         """Return current room temperature."""
-        return float(self.coordinator.data.input_registers[7])
+        return float(self.coordinator.data.input_registers[INPUT_REGISTER_ROOM_TEMPERATURE])
 
     @property
     def target_temperature(self) -> float | None:
         """Return target temperature."""
-        return float(self.coordinator.data.holding_registers[1])
+        return float(self.coordinator.data.holding_registers[HOLDING_REGISTER_TEMPERATURE_SETPOINT])
 
     @property
     def fan_mode(self) -> str | None:
         """Return current configured fan mode."""
-        return VALUE_TO_FAN_MODE.get(self.coordinator.data.holding_registers[0], "std")
+        fan_speed = self.coordinator.data.holding_registers[HOLDING_REGISTER_USER_FAN_SPEED]
+        if fan_speed > 0:
+            self._last_nonzero_fan_speed = fan_speed
+        return VALUE_TO_FAN_MODE.get(fan_speed, "std")
 
     @property
     def hvac_mode(self) -> HVACMode:
         """Return current hvac mode."""
-        fan_speed = self.coordinator.data.holding_registers[0]
+        fan_speed = self.coordinator.data.holding_registers[HOLDING_REGISTER_USER_FAN_SPEED]
         return HVACMode.OFF if fan_speed == 0 else HVACMode.HEAT
 
     async def async_set_temperature(self, **kwargs) -> None:
         """Set the temperature setpoint."""
-        if (temperature := kwargs.get("temperature")) is None:
+        if (temperature := kwargs.get(ATTR_TEMPERATURE)) is None:
             return
         await self.coordinator.async_write_holding_register(HOLDING_REGISTER_TEMPERATURE_SETPOINT, int(round(temperature)))
 
@@ -87,11 +92,16 @@ class HeruClimateEntity(CoordinatorEntity[HeruDataUpdateCoordinator], ClimateEnt
         """Set user fan mode."""
         if fan_mode not in FAN_MODE_TO_VALUE:
             return
-        await self.coordinator.async_write_holding_register(HOLDING_REGISTER_USER_FAN_SPEED, FAN_MODE_TO_VALUE[fan_mode])
+        target_speed = FAN_MODE_TO_VALUE[fan_mode]
+        if target_speed > 0:
+            self._last_nonzero_fan_speed = target_speed
+        await self.coordinator.async_write_holding_register(HOLDING_REGISTER_USER_FAN_SPEED, target_speed)
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set HVAC mode."""
         if hvac_mode == HVACMode.OFF:
             await self.coordinator.async_write_holding_register(HOLDING_REGISTER_USER_FAN_SPEED, 0)
             return
-        await self.coordinator.async_write_holding_register(HOLDING_REGISTER_USER_FAN_SPEED, 2)
+        current_speed = self.coordinator.data.holding_registers[HOLDING_REGISTER_USER_FAN_SPEED]
+        restore_speed = current_speed if current_speed > 0 else self._last_nonzero_fan_speed
+        await self.coordinator.async_write_holding_register(HOLDING_REGISTER_USER_FAN_SPEED, restore_speed)

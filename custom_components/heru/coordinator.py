@@ -67,28 +67,42 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
 
     async def _async_update_data(self) -> HeruData:
         """Fetch data from the Heru unit."""
-        async with self._request_lock:
-            await self._ensure_connected()
-            input_response = await self.client.read_input_registers(address=0, count=33, slave=DEFAULT_SLAVE)
-            discrete_response = await self.client.read_discrete_inputs(address=0, count=34, slave=DEFAULT_SLAVE)
-            holding_response = await self.client.read_holding_registers(address=0, count=2, slave=DEFAULT_SLAVE)
+        try:
+            async with self._request_lock:
+                await self._ensure_connected()
+                input_response = await self.client.read_input_registers(address=0, count=33, slave=DEFAULT_SLAVE)
+                discrete_response = await self.client.read_discrete_inputs(address=0, count=34, slave=DEFAULT_SLAVE)
+                holding_response = await self.client.read_holding_registers(address=0, count=2, slave=DEFAULT_SLAVE)
 
-        if input_response.isError() or discrete_response.isError() or holding_response.isError():
-            raise UpdateFailed("Failed to read one or more Modbus registers")
+                if input_response.isError() or discrete_response.isError() or holding_response.isError():
+                    raise UpdateFailed("Failed to read one or more Modbus registers")
 
-        return HeruData(
-            input_registers=list(input_response.registers),
-            discrete_inputs=[bool(value) for value in discrete_response.bits[:34]],
-            holding_registers=list(holding_response.registers),
-        )
+                return HeruData(
+                    input_registers=list(input_response.registers),
+                    discrete_inputs=[bool(value) for value in discrete_response.bits[:34]],
+                    holding_registers=list(holding_response.registers),
+                )
+        except UpdateFailed:
+            raise
+        except Exception as err:
+            self.client.close()
+            self.client = AsyncModbusTcpClient(host=self.host, port=self.port)
+            raise UpdateFailed(f"Unexpected Modbus error: {err}") from err
 
     async def async_write_holding_register(self, register: int, value: int) -> None:
         """Write a holding register and refresh state."""
-        async with self._request_lock:
-            await self._ensure_connected()
-            response = await self.client.write_register(address=register, value=value, slave=DEFAULT_SLAVE)
+        try:
+            async with self._request_lock:
+                await self._ensure_connected()
+                response = await self.client.write_register(address=register, value=value, slave=DEFAULT_SLAVE)
 
-        if response.isError():
-            raise UpdateFailed(f"Write failed for register {register + 1}")
+            if response.isError():
+                raise UpdateFailed(f"Write failed for register {register + 1}")
+        except UpdateFailed:
+            raise
+        except Exception as err:
+            self.client.close()
+            self.client = AsyncModbusTcpClient(host=self.host, port=self.port)
+            raise UpdateFailed(f"Unexpected Modbus write error: {err}") from err
 
         await self.async_request_refresh()
