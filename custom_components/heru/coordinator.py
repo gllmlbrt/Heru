@@ -18,6 +18,8 @@ from pymodbus.client import AsyncModbusTcpClient
 from .const import (
     DEFAULT_FRAMER,
     DEFAULT_SLAVE,
+    DISCRETE_INPUT_BLOCKS,
+    DISCRETE_INPUT_COUNT,
     DOMAIN,
     EXPECTED_COMPONENT_ID,
     FRAMER_RTU,
@@ -122,6 +124,13 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         if not await self.client.connect():
             raise UpdateFailed("Failed to connect to Modbus bridge")
 
+    def _raise_on_error(self, response, request: str) -> None:
+        """Raise if the unit rejected a request."""
+        if response.isError():
+            raise UpdateFailed(
+                f"Modbus {request} rejected by {self._connection_description}: {response}"
+            )
+
     async def _async_update_data(self) -> HeruData:
         """Fetch data from the Heru unit."""
         request = "connect"
@@ -132,17 +141,25 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
 
                 request = "read_input_registers(address=0, count=33)"
                 input_response = await self.client.read_input_registers(address=0, count=33, device_id=self.device_id)
-                request = "read_discrete_inputs(address=0, count=34)"
-                discrete_response = await self.client.read_discrete_inputs(address=0, count=34, device_id=self.device_id)
+                self._raise_on_error(input_response, request)
+
+                discrete_inputs = [False] * DISCRETE_INPUT_COUNT
+                for address, count in DISCRETE_INPUT_BLOCKS:
+                    request = f"read_discrete_inputs(address={address}, count={count})"
+                    discrete_response = await self.client.read_discrete_inputs(
+                        address=address, count=count, device_id=self.device_id
+                    )
+                    self._raise_on_error(discrete_response, request)
+                    for offset, value in enumerate(discrete_response.bits[:count]):
+                        discrete_inputs[address + offset] = bool(value)
+
                 request = "read_holding_registers(address=0, count=2)"
                 holding_response = await self.client.read_holding_registers(address=0, count=2, device_id=self.device_id)
-
-                if input_response.isError() or discrete_response.isError() or holding_response.isError():
-                    raise UpdateFailed("Failed to read one or more Modbus registers")
+                self._raise_on_error(holding_response, request)
 
                 return HeruData(
                     input_registers=list(input_response.registers),
-                    discrete_inputs=[bool(value) for value in discrete_response.bits[:34]],
+                    discrete_inputs=discrete_inputs,
                     holding_registers=list(holding_response.registers),
                 )
         except UpdateFailed:
