@@ -3,16 +3,27 @@
     "step": {
       "user": {
         "title": "Connect to HERU",
-        "description": "Enter the Modbus bridge details for the HERU unit.",
+        "description": "Enter the Modbus bridge details for the HERU unit. Use RTU framing if the bridge is a transparent serial tunnel rather than a Modbus TCP gateway.",
         "data": {
           "name": "Name",
           "host": "Host",
-          "port": "Port"
+          "port": "Port",
+          "device_id": "Unit/device ID",
+          "framer": "Framing"
         }
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to the HERU Modbus bridge"
+      "cannot_connect": "Failed to connect to the HERU Modbus bridge",
+      "no_heru_response": "Connected to the bridge, but no HERU unit answered. Check the unit/device ID and the framing setting."
+    }
+  },
+  "selector": {
+    "framer": {
+      "options": {
+        "socket": "Modbus TCP (socket)",
+        "rtu": "Modbus RTU over TCP"
+      }
     }
   }
 }
