@@ -6,12 +6,13 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
+from pymodbus.client import AsyncModbusTcpClient
 
 try:
     from homeassistant.config_entries import ConfigFlowResult
 except ImportError:  # HA < 2024.6 does not export ConfigFlowResult here
-    from homeassistant.data_entry_flow import FlowResult as ConfigFlowResultfrom homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
-from pymodbus.client import AsyncModbusTcpClient
+    from homeassistant.data_entry_flow import FlowResult as ConfigFlowResult
 
 from .const import DEFAULT_NAME, DEFAULT_PORT, DOMAIN
 
