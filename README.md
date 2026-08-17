@@ -24,6 +24,18 @@ Home Assistant custom integration for older generation 3 HERU Östberg ventilati
 6. Search for **Heru** in HACS Integrations and install it.
 7. Restart Home Assistant.
 
+## HACS release requirement
+
+HACS installs integrations from a tagged GitHub version. The version in
+`custom_components/heru/manifest.json` must match an existing Git tag or GitHub
+release in this repository.
+
+For example, with `"version": "0.1.0"` in the manifest, the repository also
+needs a `0.1.0` or `v0.1.0` tag published on GitHub. Without a matching tag,
+HACS can fall back to a commit SHA and show an error like:
+
+`The version 9b6fa71 for this integration can not be used with HACS.`
+
 ## Configure
 
 1. Go to **Settings → Devices & Services**.
