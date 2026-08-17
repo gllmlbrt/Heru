@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -31,7 +33,7 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         """Initialize the coordinator."""
         super().__init__(
             hass,
-            logger=hass.data.get("logger", __import__("logging")).getLogger(__name__),
+            logger=logging.getLogger(__name__),
             name=DOMAIN,
             update_interval=timedelta(seconds=UPDATE_INTERVAL_SECONDS),
         )
@@ -39,9 +41,7 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         self.host = host
         self.port = port
         self.client = AsyncModbusTcpClient(host=host, port=port)
-        self._lock = hass.loop.create_future()
-        self._lock = None
-        self._request_lock = __import__("asyncio").Lock()
+        self._request_lock = asyncio.Lock()
 
     @property
     def device_info(self) -> DeviceInfo:

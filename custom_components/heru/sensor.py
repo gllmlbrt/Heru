@@ -7,7 +7,7 @@ from typing import Callable
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfPressure, UnitOfTemperature
+from homeassistant.const import PERCENTAGE, UnitOfPressure, UnitOfTemperature, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -41,11 +41,11 @@ SENSOR_DESCRIPTIONS: tuple[HeruSensorDescription, ...] = (
     HeruSensorDescription(key="carbon_dioxide", translation_key="carbon_dioxide", register_index=14, device_class=SensorDeviceClass.CO2, native_unit_of_measurement="ppm", state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="sensors_open", translation_key="sensors_open", register_index=17, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="sensors_shorted", translation_key="sensors_shorted", register_index=18, entity_category=EntityCategory.DIAGNOSTIC),
-    HeruSensorDescription(key="filter_days_left", translation_key="filter_days_left", register_index=19, device_class=SensorDeviceClass.DURATION, native_unit_of_measurement="d", state_class=SensorStateClass.MEASUREMENT),
+    HeruSensorDescription(key="filter_days_left", translation_key="filter_days_left", register_index=19, device_class=SensorDeviceClass.DURATION, native_unit_of_measurement=UnitOfTime.DAYS, state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="current_weektimer_program", translation_key="current_weektimer_program", register_index=20),
-    HeruSensorDescription(key="current_fan_speed", translation_key="current_fan_speed", register_index=21),
-    HeruSensorDescription(key="current_supply_fan_step", translation_key="current_supply_fan_step", register_index=22),
-    HeruSensorDescription(key="current_exhaust_fan_step", translation_key="current_exhaust_fan_step", register_index=23),
+    HeruSensorDescription(key="current_fan_speed", translation_key="current_fan_speed", register_index=21, value_fn=lambda value: {0: "off", 1: "min", 2: "std", 3: "mod", 4: "max"}.get(value, str(value)), device_class=SensorDeviceClass.ENUM, options=["off", "min", "std", "mod", "max"]),
+    HeruSensorDescription(key="current_supply_fan_step", translation_key="current_supply_fan_step", register_index=22, value_fn=lambda value: {0: "off", 1: "min", 2: "std", 3: "mod", 4: "max"}.get(value, str(value)), device_class=SensorDeviceClass.ENUM, options=["off", "min", "std", "mod", "max"]),
+    HeruSensorDescription(key="current_exhaust_fan_step", translation_key="current_exhaust_fan_step", register_index=23, value_fn=lambda value: {0: "off", 1: "min", 2: "std", 3: "mod", 4: "max"}.get(value, str(value)), device_class=SensorDeviceClass.ENUM, options=["off", "min", "std", "mod", "max"]),
     HeruSensorDescription(key="current_supply_fan_power", translation_key="current_supply_fan_power", register_index=24, native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="current_exhaust_fan_power", translation_key="current_exhaust_fan_power", register_index=25, native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="current_supply_fan_speed_rpm", translation_key="current_supply_fan_speed_rpm", register_index=26, native_unit_of_measurement="rpm", state_class=SensorStateClass.MEASUREMENT),
