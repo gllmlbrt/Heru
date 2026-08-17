@@ -205,6 +205,18 @@
       },
       "away_mode": {
         "name": "Away mode"
+      },
+      "water_heater_connected": {
+        "name": "Water heater connected"
+      },
+      "electric_heater_connected": {
+        "name": "Electric heater connected"
+      },
+      "cooler_connected": {
+        "name": "Cooler connected"
+      },
+      "summer_night_cooling": {
+        "name": "Summer night cooling"
       }
     },
     "button": {
@@ -213,6 +225,11 @@
       },
       "reset_filter_timer": {
         "name": "Reset filter timer"
+      }
+    },
+    "number": {
+      "freeze_protection_limit": {
+        "name": "Freeze protection limit"
       }
     }
   }

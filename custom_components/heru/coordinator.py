@@ -17,6 +17,8 @@ from pymodbus.client import AsyncModbusTcpClient
 
 from .const import (
     COIL_COUNT,
+    HOLDING_CONFIG_COUNT,
+    HOLDING_CONFIG_START,
     DEFAULT_FRAMER,
     DEFAULT_SLAVE,
     DISCRETE_INPUT_BLOCKS,
@@ -70,6 +72,7 @@ class HeruData:
     discrete_inputs: list[bool]
     holding_registers: list[int]
     coils: list[bool] | None
+    config_registers: list[int] | None
 
 
 class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
@@ -99,6 +102,7 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         self.client = _build_client(host, port, framer)
         self._request_lock = asyncio.Lock()
         self._coil_warning_logged = False
+        self._config_warning_logged = False
 
     @property
     def _connection_description(self) -> str:
@@ -162,6 +166,46 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
                 reason,
             )
 
+    async def _async_read_config_registers(self) -> list[int] | None:
+        """Read the configuration registers, or None if unsupported.
+
+        Optional like the coils: a unit that rejects the block keeps every
+        other entity working.
+        """
+        try:
+            response = await self.client.read_holding_registers(
+                address=HOLDING_CONFIG_START, count=HOLDING_CONFIG_COUNT, device_id=self.device_id
+            )
+        except Exception as err:  # noqa: BLE001 - optional block, never fatal
+            self._log_config_unavailable(err)
+            return None
+        if response.isError():
+            self._log_config_unavailable(response)
+            return None
+        self._config_warning_logged = False
+        return list(response.registers)
+
+    def _log_config_unavailable(self, reason: object) -> None:
+        """Warn once that the configuration registers cannot be read."""
+        if not self._config_warning_logged:
+            self._config_warning_logged = True
+            self.logger.warning(
+                "Heru at %s did not answer the configuration register read (%s); the "
+                "hardware and freeze protection entities will be unavailable",
+                self._connection_description,
+                reason,
+            )
+
+    def config_register(self, index: int) -> int | None:
+        """Return a configuration register by its absolute index."""
+        registers = self.data.config_registers
+        if registers is None:
+            return None
+        offset = index - HOLDING_CONFIG_START
+        if 0 <= offset < len(registers):
+            return registers[offset]
+        return None
+
     async def async_write_coil(self, coil: int, value: bool) -> None:
         """Write a coil and refresh state."""
         try:
@@ -207,12 +251,14 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
                 self._raise_on_error(holding_response, request)
 
                 coils = await self._async_read_coils()
+                config_registers = await self._async_read_config_registers()
 
                 return HeruData(
                     input_registers=list(input_response.registers),
                     discrete_inputs=discrete_inputs,
                     holding_registers=list(holding_response.registers),
                     coils=coils,
+                    config_registers=config_registers,
                 )
         except UpdateFailed:
             raise

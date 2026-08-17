@@ -10,7 +10,7 @@ from homeassistant.helpers.typing import ConfigType
 from .const import CONF_DEVICE_ID, CONF_FRAMER, DEFAULT_FRAMER, DEFAULT_SLAVE, DOMAIN
 from .coordinator import HeruDataUpdateCoordinator
 
-PLATFORMS = ["binary_sensor", "button", "climate", "sensor", "switch"]
+PLATFORMS = ["binary_sensor", "button", "climate", "number", "sensor", "switch"]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
