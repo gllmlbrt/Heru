@@ -7,26 +7,28 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
-from pymodbus.client import AsyncModbusTcpClient
+from homeassistant.helpers.selector import (
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
+
+from .const import (
+    CONF_DEVICE_ID,
+    CONF_FRAMER,
+    DEFAULT_FRAMER,
+    DEFAULT_NAME,
+    DEFAULT_PORT,
+    DEFAULT_SLAVE,
+    DOMAIN,
+    FRAMER_OPTIONS,
+)
+from .coordinator import async_probe_unit
 
 try:
     from homeassistant.config_entries import ConfigFlowResult
 except ImportError:  # HA < 2024.6 does not export ConfigFlowResult here
     from homeassistant.data_entry_flow import FlowResult as ConfigFlowResult
-
-from .const import DEFAULT_NAME, DEFAULT_PORT, DOMAIN
-
-
-async def _can_connect(host: str, port: int) -> bool:
-    """Check if Modbus bridge is reachable."""
-    client = AsyncModbusTcpClient(host=host, port=port)
-    try:
-        connected = await client.connect()
-    except Exception:
-        return False
-    finally:
-        client.close()
-    return connected
 
 
 class HeruConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -39,19 +41,29 @@ class HeruConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            await self.async_set_unique_id(f"{user_input[CONF_HOST]}:{user_input[CONF_PORT]}")
+            await self.async_set_unique_id(
+                f"{user_input[CONF_HOST]}:{user_input[CONF_PORT]}:{user_input[CONF_DEVICE_ID]}"
+            )
             self._abort_if_unique_id_configured()
 
-            if await _can_connect(user_input[CONF_HOST], user_input[CONF_PORT]):
+            error = await async_probe_unit(
+                host=user_input[CONF_HOST],
+                port=user_input[CONF_PORT],
+                device_id=user_input[CONF_DEVICE_ID],
+                framer=user_input[CONF_FRAMER],
+            )
+            if error is None:
                 return self.async_create_entry(
                     title=user_input[CONF_NAME],
                     data={
                         CONF_NAME: user_input[CONF_NAME],
                         CONF_HOST: user_input[CONF_HOST],
                         CONF_PORT: user_input[CONF_PORT],
+                        CONF_DEVICE_ID: user_input[CONF_DEVICE_ID],
+                        CONF_FRAMER: user_input[CONF_FRAMER],
                     },
                 )
-            errors["base"] = "cannot_connect"
+            errors["base"] = error
 
         return self.async_show_form(
             step_id="user",
@@ -60,6 +72,16 @@ class HeruConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Optional(CONF_NAME, default=DEFAULT_NAME): str,
                     vol.Required(CONF_HOST): str,
                     vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
+                    vol.Required(CONF_DEVICE_ID, default=DEFAULT_SLAVE): vol.All(
+                        int, vol.Range(min=0, max=247)
+                    ),
+                    vol.Required(CONF_FRAMER, default=DEFAULT_FRAMER): SelectSelector(
+                        SelectSelectorConfig(
+                            options=FRAMER_OPTIONS,
+                            translation_key="framer",
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    ),
                 }
             ),
             errors=errors,

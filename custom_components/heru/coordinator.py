@@ -12,9 +12,51 @@ from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from pymodbus import FramerType
 from pymodbus.client import AsyncModbusTcpClient
 
-from .const import DEFAULT_SLAVE, DOMAIN, UPDATE_INTERVAL_SECONDS
+from .const import (
+    DEFAULT_FRAMER,
+    DEFAULT_SLAVE,
+    DOMAIN,
+    EXPECTED_COMPONENT_ID,
+    FRAMER_RTU,
+    INPUT_REGISTER_COMPONENT_ID,
+    UPDATE_INTERVAL_SECONDS,
+)
+
+
+def _framer_type(framer: str) -> FramerType:
+    """Map the configured framer name to a pymodbus framer."""
+    return FramerType.RTU if framer == FRAMER_RTU else FramerType.SOCKET
+
+
+def _build_client(host: str, port: int, framer: str) -> AsyncModbusTcpClient:
+    """Create a Modbus client for the configured bridge."""
+    return AsyncModbusTcpClient(host, port=port, framer=_framer_type(framer))
+
+
+async def async_probe_unit(host: str, port: int, device_id: int, framer: str) -> str | None:
+    """Check that a HERU unit answers, returning an error key or None on success.
+
+    A bridge with the wrong framer or unit ID accepts the TCP connection and
+    then never replies, so a plain connect check is not enough to validate the
+    settings the user entered.
+    """
+    client = _build_client(host, port, framer)
+    try:
+        if not await client.connect():
+            return "cannot_connect"
+        response = await client.read_input_registers(
+            address=INPUT_REGISTER_COMPONENT_ID, count=1, device_id=device_id
+        )
+        if response.isError() or response.registers[0] != EXPECTED_COMPONENT_ID:
+            return "no_heru_response"
+    except Exception:  # noqa: BLE001 - any Modbus failure means these settings do not work
+        return "no_heru_response"
+    finally:
+        client.close()
+    return None
 
 
 @dataclass(slots=True)
@@ -29,7 +71,15 @@ class HeruData:
 class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
     """Manage Heru data fetching and writing."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, host: str, port: int) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        host: str,
+        port: int,
+        device_id: int = DEFAULT_SLAVE,
+        framer: str = DEFAULT_FRAMER,
+    ) -> None:
         """Initialize the coordinator."""
         super().__init__(
             hass,
@@ -40,7 +90,9 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         self.entry = entry
         self.host = host
         self.port = port
-        self.client = AsyncModbusTcpClient(host=host, port=port)
+        self.device_id = device_id
+        self.framer = framer
+        self.client = _build_client(host, port, framer)
         self._request_lock = asyncio.Lock()
 
     @property
@@ -70,9 +122,9 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         try:
             async with self._request_lock:
                 await self._ensure_connected()
-                input_response = await self.client.read_input_registers(address=0, count=33, device_id=DEFAULT_SLAVE)
-                discrete_response = await self.client.read_discrete_inputs(address=0, count=34, device_id=DEFAULT_SLAVE)
-                holding_response = await self.client.read_holding_registers(address=0, count=2, device_id=DEFAULT_SLAVE)
+                input_response = await self.client.read_input_registers(address=0, count=33, device_id=self.device_id)
+                discrete_response = await self.client.read_discrete_inputs(address=0, count=34, device_id=self.device_id)
+                holding_response = await self.client.read_holding_registers(address=0, count=2, device_id=self.device_id)
 
                 if input_response.isError() or discrete_response.isError() or holding_response.isError():
                     raise UpdateFailed("Failed to read one or more Modbus registers")
@@ -86,7 +138,7 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
             raise
         except Exception as err:
             self.client.close()
-            self.client = AsyncModbusTcpClient(host=self.host, port=self.port)
+            self.client = _build_client(self.host, self.port, self.framer)
             raise UpdateFailed(f"Unexpected Modbus error: {err}") from err
 
     async def async_write_holding_register(self, register: int, value: int) -> None:
@@ -94,7 +146,7 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         try:
             async with self._request_lock:
                 await self._ensure_connected()
-                response = await self.client.write_register(address=register, value=value, device_id=DEFAULT_SLAVE)
+                response = await self.client.write_register(address=register, value=value, device_id=self.device_id)
 
             if response.isError():
                 raise UpdateFailed(f"Write failed for register {register + 1}")
@@ -102,7 +154,7 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
             raise
         except Exception as err:
             self.client.close()
-            self.client = AsyncModbusTcpClient(host=self.host, port=self.port)
+            self.client = _build_client(self.host, self.port, self.framer)
             raise UpdateFailed(f"Unexpected Modbus write error: {err}") from err
 
         await self.async_request_refresh()
