@@ -96,6 +96,11 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         self._request_lock = asyncio.Lock()
 
     @property
+    def _connection_description(self) -> str:
+        """Describe the active connection settings for log messages."""
+        return f"{self.host}:{self.port} (unit {self.device_id}, {self.framer} framing)"
+
+    @property
     def device_info(self) -> DeviceInfo:
         """Return a shared device description."""
         return DeviceInfo(
@@ -119,11 +124,17 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
 
     async def _async_update_data(self) -> HeruData:
         """Fetch data from the Heru unit."""
+        request = "connect"
         try:
             async with self._request_lock:
                 await self._ensure_connected()
+                self.logger.debug("Polling Heru at %s", self._connection_description)
+
+                request = "read_input_registers(address=0, count=33)"
                 input_response = await self.client.read_input_registers(address=0, count=33, device_id=self.device_id)
+                request = "read_discrete_inputs(address=0, count=34)"
                 discrete_response = await self.client.read_discrete_inputs(address=0, count=34, device_id=self.device_id)
+                request = "read_holding_registers(address=0, count=2)"
                 holding_response = await self.client.read_holding_registers(address=0, count=2, device_id=self.device_id)
 
                 if input_response.isError() or discrete_response.isError() or holding_response.isError():
@@ -139,7 +150,9 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         except Exception as err:
             self.client.close()
             self.client = _build_client(self.host, self.port, self.framer)
-            raise UpdateFailed(f"Unexpected Modbus error: {err}") from err
+            raise UpdateFailed(
+                f"Modbus {request} failed against {self._connection_description}: {err}"
+            ) from err
 
     async def async_write_holding_register(self, register: int, value: int) -> None:
         """Write a holding register and refresh state."""
