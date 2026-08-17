@@ -1,0 +1,78 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to HERU",
+        "description": "Enter the Modbus bridge details for the HERU unit.",
+        "data": {
+          "name": "Name",
+          "host": "Host",
+          "port": "Port"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the HERU Modbus bridge"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "component_id": {"name": "Component ID"},
+      "outdoor_temperature": {"name": "Outdoor temperature"},
+      "supply_air_temperature": {"name": "Supply air temperature"},
+      "exhaust_air_temperature": {"name": "Exhaust air temperature"},
+      "waste_air_temperature": {"name": "Waste air temperature"},
+      "water_temperature": {"name": "Water temperature"},
+      "heat_recovery_wheel_temperature": {"name": "Heat recovery wheel temperature"},
+      "room_temperature": {"name": "Room temperature"},
+      "supply_pressure": {"name": "Supply pressure"},
+      "exhaust_pressure": {"name": "Exhaust pressure"},
+      "relative_humidity": {"name": "Relative humidity"},
+      "carbon_dioxide": {"name": "Carbon dioxide"},
+      "sensors_open": {"name": "Sensors open"},
+      "sensors_shorted": {"name": "Sensors shorted"},
+      "filter_days_left": {"name": "Filter days left"},
+      "current_weektimer_program": {"name": "Current weektimer program"},
+      "current_fan_speed": {"name": "Current fan speed"},
+      "current_supply_fan_step": {"name": "Current supply fan step"},
+      "current_exhaust_fan_step": {"name": "Current exhaust fan step"},
+      "current_supply_fan_power": {"name": "Current supply fan power"},
+      "current_exhaust_fan_power": {"name": "Current exhaust fan power"},
+      "current_supply_fan_speed_rpm": {"name": "Current supply fan speed"},
+      "current_exhaust_fan_speed_rpm": {"name": "Current exhaust fan speed"},
+      "current_heating_power": {"name": "Current heating power"},
+      "current_heat_cold_recovery_power": {"name": "Current heat/cold recovery power"},
+      "current_cooling_power": {"name": "Current cooling power"},
+      "supply_fan_control_voltage": {"name": "Supply fan control voltage"},
+      "exhaust_fan_control_voltage": {"name": "Exhaust fan control voltage"}
+    },
+    "binary_sensor": {
+      "fire_alarm_switch": {"name": "Fire alarm switch"},
+      "boost_switch": {"name": "Boost switch"},
+      "overpressure_switch": {"name": "Overpressure switch"},
+      "aux_switch": {"name": "Aux switch"},
+      "fire_alarm": {"name": "Fire alarm"},
+      "rotor_alarm": {"name": "Rotor alarm"},
+      "freeze_alarm": {"name": "Freeze alarm"},
+      "low_supply_alarm": {"name": "Low supply alarm"},
+      "low_rotor_temperature_alarm": {"name": "Low rotor temperature alarm"},
+      "temperature_sensor_open_circuit_alarm": {"name": "Temperature sensor open circuit alarm"},
+      "temperature_sensor_short_circuit_alarm": {"name": "Temperature sensor short circuit alarm"},
+      "pulser_alarm": {"name": "Pulser alarm"},
+      "supply_fan_alarm": {"name": "Supply fan alarm"},
+      "exhaust_fan_alarm": {"name": "Exhaust fan alarm"},
+      "supply_filter_alarm": {"name": "Supply filter alarm"},
+      "exhaust_filter_alarm": {"name": "Exhaust filter alarm"},
+      "filter_timer_alarm": {"name": "Filter timer alarm"},
+      "freeze_protection_b_level": {"name": "Freeze protection B level"},
+      "freeze_protection_a_level": {"name": "Freeze protection A level"},
+      "startup_phase_1": {"name": "Startup phase 1"},
+      "startup_phase_2": {"name": "Startup phase 2"},
+      "heating": {"name": "Heating"},
+      "recovering_heat_cold": {"name": "Recovering heat/cold"},
+      "cooling": {"name": "Cooling"},
+      "co2_boost": {"name": "CO2 boost"},
+      "rh_boost": {"name": "RH boost"}
+    }
+  }
+}
