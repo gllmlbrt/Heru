@@ -25,5 +25,29 @@
         "rtu": "Modbus RTU over TCP"
       }
     }
+  },
+  "entity": {
+    "switch": {
+      "unit_on": {
+        "name": "Unit on"
+      },
+      "overpressure_mode": {
+        "name": "Overpressure mode"
+      },
+      "boost_mode": {
+        "name": "Boost mode"
+      },
+      "away_mode": {
+        "name": "Away mode"
+      }
+    },
+    "button": {
+      "clear_alarms": {
+        "name": "Clear alarms"
+      },
+      "reset_filter_timer": {
+        "name": "Reset filter timer"
+      }
+    }
   }
 }

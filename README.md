@@ -5,12 +5,23 @@ Home Assistant custom integration for older generation 3 HERU Östberg ventilati
 ## Features
 
 - Config flow setup from Home Assistant UI
-- Read-only telemetry and status entities based on `Modbus_Registers_HERU_62_250_v07.pdf`
-  - Input register sensors (temperatures, pressure, humidity, CO2, fan stats, etc.)
-  - Discrete-input binary sensors (alarms, switches, run states)
+- Telemetry and status entities based on `Modbus_Registers_HERU_62_250_v07.pdf`
+  - Input register sensors (temperatures, pressure, humidity, CO2, fan stats, etc.).
+    Temperatures are reported by the unit in tenths of a degree as signed values
+    and are converted accordingly.
+  - Discrete-input binary sensors (alarms, switches, run states). `1x00005` -
+    `1x00009` are not implemented by the unit, so the inputs are read as two
+    blocks either side of that gap.
+- Mode switches for the read/write coils:
+  - Unit on (`0x00001`), Overpressure (`0x00002`), Boost (`0x00003`), Away (`0x00004`)
+- Buttons for the momentary coils, which act on write and always read back 0:
+  - Clear alarms (`0x00005`), Reset filter timer (`0x00006`)
 - Climate entity for:
   - Temperature setpoint (`4x00002`)
   - User fan speed setpoint (`4x00001`)
+- Diagnostic entities (component ID, sensor open/short bit fields, control
+  voltages, fan steps, alarms) are categorised as diagnostics so they stay out
+  of the main device controls.
 
 ## Install with HACS (Custom Repository)
 

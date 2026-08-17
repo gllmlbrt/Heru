@@ -27,10 +27,10 @@ class HeruBinarySensorDescription(BinarySensorEntityDescription):
 
 
 BINARY_SENSOR_DESCRIPTIONS: tuple[HeruBinarySensorDescription, ...] = (
-    HeruBinarySensorDescription(key="fire_alarm_switch", translation_key="fire_alarm_switch", bit_index=0),
-    HeruBinarySensorDescription(key="boost_switch", translation_key="boost_switch", bit_index=1),
-    HeruBinarySensorDescription(key="overpressure_switch", translation_key="overpressure_switch", bit_index=2),
-    HeruBinarySensorDescription(key="aux_switch", translation_key="aux_switch", bit_index=3),
+    HeruBinarySensorDescription(key="fire_alarm_switch", translation_key="fire_alarm_switch", bit_index=0, entity_category=EntityCategory.DIAGNOSTIC),
+    HeruBinarySensorDescription(key="boost_switch", translation_key="boost_switch", bit_index=1, entity_category=EntityCategory.DIAGNOSTIC),
+    HeruBinarySensorDescription(key="overpressure_switch", translation_key="overpressure_switch", bit_index=2, entity_category=EntityCategory.DIAGNOSTIC),
+    HeruBinarySensorDescription(key="aux_switch", translation_key="aux_switch", bit_index=3, entity_category=EntityCategory.DIAGNOSTIC),
     HeruBinarySensorDescription(key="fire_alarm", translation_key="fire_alarm", bit_index=9, entity_category=EntityCategory.DIAGNOSTIC, device_class=BinarySensorDeviceClass.PROBLEM),
     HeruBinarySensorDescription(key="rotor_alarm", translation_key="rotor_alarm", bit_index=10, entity_category=EntityCategory.DIAGNOSTIC, device_class=BinarySensorDeviceClass.PROBLEM),
     HeruBinarySensorDescription(key="freeze_alarm", translation_key="freeze_alarm", bit_index=12, entity_category=EntityCategory.DIAGNOSTIC, device_class=BinarySensorDeviceClass.PROBLEM),
@@ -44,15 +44,15 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[HeruBinarySensorDescription, ...] = (
     HeruBinarySensorDescription(key="supply_filter_alarm", translation_key="supply_filter_alarm", bit_index=22, entity_category=EntityCategory.DIAGNOSTIC, device_class=BinarySensorDeviceClass.PROBLEM),
     HeruBinarySensorDescription(key="exhaust_filter_alarm", translation_key="exhaust_filter_alarm", bit_index=23, entity_category=EntityCategory.DIAGNOSTIC, device_class=BinarySensorDeviceClass.PROBLEM),
     HeruBinarySensorDescription(key="filter_timer_alarm", translation_key="filter_timer_alarm", bit_index=24, entity_category=EntityCategory.DIAGNOSTIC, device_class=BinarySensorDeviceClass.PROBLEM),
-    HeruBinarySensorDescription(key="freeze_protection_b_level", translation_key="freeze_protection_b_level", bit_index=25),
-    HeruBinarySensorDescription(key="freeze_protection_a_level", translation_key="freeze_protection_a_level", bit_index=26),
-    HeruBinarySensorDescription(key="startup_phase_1", translation_key="startup_phase_1", bit_index=27),
-    HeruBinarySensorDescription(key="startup_phase_2", translation_key="startup_phase_2", bit_index=28),
-    HeruBinarySensorDescription(key="heating", translation_key="heating", bit_index=29),
-    HeruBinarySensorDescription(key="recovering_heat_cold", translation_key="recovering_heat_cold", bit_index=30),
-    HeruBinarySensorDescription(key="cooling", translation_key="cooling", bit_index=31),
-    HeruBinarySensorDescription(key="co2_boost", translation_key="co2_boost", bit_index=32),
-    HeruBinarySensorDescription(key="rh_boost", translation_key="rh_boost", bit_index=33),
+    HeruBinarySensorDescription(key="freeze_protection_b_level", translation_key="freeze_protection_b_level", bit_index=25, entity_category=EntityCategory.DIAGNOSTIC),
+    HeruBinarySensorDescription(key="freeze_protection_a_level", translation_key="freeze_protection_a_level", bit_index=26, entity_category=EntityCategory.DIAGNOSTIC),
+    HeruBinarySensorDescription(key="startup_phase_1", translation_key="startup_phase_1", bit_index=27, entity_category=EntityCategory.DIAGNOSTIC),
+    HeruBinarySensorDescription(key="startup_phase_2", translation_key="startup_phase_2", bit_index=28, entity_category=EntityCategory.DIAGNOSTIC),
+    HeruBinarySensorDescription(key="heating", translation_key="heating", bit_index=29, device_class=BinarySensorDeviceClass.RUNNING),
+    HeruBinarySensorDescription(key="recovering_heat_cold", translation_key="recovering_heat_cold", bit_index=30, device_class=BinarySensorDeviceClass.RUNNING),
+    HeruBinarySensorDescription(key="cooling", translation_key="cooling", bit_index=31, device_class=BinarySensorDeviceClass.RUNNING),
+    HeruBinarySensorDescription(key="co2_boost", translation_key="co2_boost", bit_index=32, device_class=BinarySensorDeviceClass.RUNNING),
+    HeruBinarySensorDescription(key="rh_boost", translation_key="rh_boost", bit_index=33, device_class=BinarySensorDeviceClass.RUNNING),
 )
 
 

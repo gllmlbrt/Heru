@@ -11,6 +11,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     DOMAIN,
+    TEMPERATURE_SCALE,
     INPUT_REGISTER_ROOM_TEMPERATURE,
     HOLDING_REGISTER_TEMPERATURE_SETPOINT,
     HOLDING_REGISTER_USER_FAN_SPEED,
@@ -60,7 +61,10 @@ class HeruClimateEntity(CoordinatorEntity[HeruDataUpdateCoordinator], ClimateEnt
     @property
     def current_temperature(self) -> float | None:
         """Return current room temperature."""
-        return float(self.coordinator.data.input_registers[INPUT_REGISTER_ROOM_TEMPERATURE])
+        raw = self.coordinator.data.input_registers[INPUT_REGISTER_ROOM_TEMPERATURE]
+        if raw >= 0x8000:  # tenths of a degree, signed
+            raw -= 0x10000
+        return round(raw * TEMPERATURE_SCALE, 1)
 
     @property
     def target_temperature(self) -> float | None:
