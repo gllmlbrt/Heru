@@ -34,13 +34,23 @@ COIL_RESET_FILTER_TIMER = 5
 # Temperatures are reported in tenths of a degree as signed 16-bit values.
 TEMPERATURE_SCALE = 0.1
 
-# Configuration holding registers 4x00016 - 4x00052, read as one optional
+# Heating, cooling and recovery power are reported over a 0-255 range.
+POWER_255_TO_PERCENT = 100 / 255
+
+# 4x00001 takes 0 = Off and steps 1-4. The manual names them Min/Std/Mod/Max;
+# the step numbers are used here so they line up with the unit's own display.
+FAN_STEP_OPTIONS = ["off", "1", "2", "3", "4"]
+
+# Configuration holding registers 4x00003 - 4x00069, read as one optional
 # block. The "connected" flags describe which hardware is fitted: the unit
 # marks a temperature sensor as required based on them and raises an
 # open-circuit alarm when a flag is set but no sensor is present.
-HOLDING_CONFIG_START = 15
-HOLDING_CONFIG_COUNT = 37
+HOLDING_CONFIG_START = 2
+HOLDING_CONFIG_COUNT = 67
 
+HOLDING_REGISTER_SUPPLY_FAN_SPEED_EC = 2  # 4x00003, percent
+HOLDING_REGISTER_EXHAUST_FAN_SPEED_EC = 3  # 4x00004, percent
+HOLDING_REGISTER_WEEKTIMER_ENABLE = 68  # 4x00069
 HOLDING_REGISTER_SNC_ENABLE = 15  # 4x00016, summer night cooling
 HOLDING_REGISTER_FREEZE_PROTECTION_LIMIT = 16  # 4x00017
 HOLDING_REGISTER_WATER_HEATER_CONNECTED = 49  # 4x00050, requires sensor T5

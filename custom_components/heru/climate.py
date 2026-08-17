@@ -12,19 +12,14 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import (
     DOMAIN,
     TEMPERATURE_SCALE,
+    FAN_STEP_OPTIONS,
     INPUT_REGISTER_EXHAUST_AIR_TEMPERATURE,
     HOLDING_REGISTER_TEMPERATURE_SETPOINT,
     HOLDING_REGISTER_USER_FAN_SPEED,
 )
 from .coordinator import HeruDataUpdateCoordinator
 
-FAN_MODE_TO_VALUE = {
-    "off": 0,
-    "min": 1,
-    "std": 2,
-    "mod": 3,
-    "max": 4,
-}
+FAN_MODE_TO_VALUE = {option: value for value, option in enumerate(FAN_STEP_OPTIONS)}
 VALUE_TO_FAN_MODE = {value: key for key, value in FAN_MODE_TO_VALUE.items()}
 
 
@@ -77,7 +72,7 @@ class HeruClimateEntity(CoordinatorEntity[HeruDataUpdateCoordinator], ClimateEnt
         fan_speed = self.coordinator.data.holding_registers[HOLDING_REGISTER_USER_FAN_SPEED]
         if fan_speed > 0:
             self._last_nonzero_fan_speed = fan_speed
-        return VALUE_TO_FAN_MODE.get(fan_speed, "std")
+        return VALUE_TO_FAN_MODE.get(fan_speed)
 
     @property
     def hvac_mode(self) -> HVACMode:
