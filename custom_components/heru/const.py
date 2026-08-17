@@ -37,6 +37,10 @@ TEMPERATURE_SCALE = 0.1
 HOLDING_REGISTER_USER_FAN_SPEED = 0
 HOLDING_REGISTER_TEMPERATURE_SETPOINT = 1
 INPUT_REGISTER_ROOM_TEMPERATURE = 7
+# Air drawn out of the house, before the heat exchanger. This is the unit's
+# measure of indoor temperature - waste air is the same air after heat
+# recovery, so it tracks the outdoor side instead.
+INPUT_REGISTER_EXHAUST_AIR_TEMPERATURE = 3
 
 # 3x00001 "Component ID" always reads 10 on a HERU Gen 3, so it doubles as a
 # check that the configured unit ID and framer actually reach the unit.
