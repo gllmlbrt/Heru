@@ -21,6 +21,19 @@ FRAMER_OPTIONS = [FRAMER_SOCKET, FRAMER_RTU]
 DISCRETE_INPUT_COUNT = 34
 DISCRETE_INPUT_BLOCKS = ((0, 4), (9, 25))
 
+# Coils 0x00001 - 0x00006 are contiguous and read/write. The last two are
+# momentary: they act on write and always read back 0.
+COIL_COUNT = 6
+COIL_UNIT_ON = 0
+COIL_OVERPRESSURE_MODE = 1
+COIL_BOOST_MODE = 2
+COIL_AWAY_MODE = 3
+COIL_CLEAR_ALARMS = 4
+COIL_RESET_FILTER_TIMER = 5
+
+# Temperatures are reported in tenths of a degree as signed 16-bit values.
+TEMPERATURE_SCALE = 0.1
+
 HOLDING_REGISTER_USER_FAN_SPEED = 0
 HOLDING_REGISTER_TEMPERATURE_SETPOINT = 1
 INPUT_REGISTER_ROOM_TEMPERATURE = 7

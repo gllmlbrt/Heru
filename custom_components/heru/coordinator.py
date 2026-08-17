@@ -16,6 +16,7 @@ from pymodbus import FramerType
 from pymodbus.client import AsyncModbusTcpClient
 
 from .const import (
+    COIL_COUNT,
     DEFAULT_FRAMER,
     DEFAULT_SLAVE,
     DISCRETE_INPUT_BLOCKS,
@@ -68,6 +69,7 @@ class HeruData:
     input_registers: list[int]
     discrete_inputs: list[bool]
     holding_registers: list[int]
+    coils: list[bool] | None
 
 
 class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
@@ -96,6 +98,7 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         self.framer = framer
         self.client = _build_client(host, port, framer)
         self._request_lock = asyncio.Lock()
+        self._coil_warning_logged = False
 
     @property
     def _connection_description(self) -> str:
@@ -131,6 +134,52 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
                 f"Modbus {request} rejected by {self._connection_description}: {response}"
             )
 
+    async def _async_read_coils(self) -> list[bool] | None:
+        """Read the mode coils, returning None if the unit does not expose them.
+
+        Coil support is not fatal: a unit that rejects the read still provides
+        every sensor, so only the coil-backed entities go unavailable.
+        """
+        try:
+            response = await self.client.read_coils(address=0, count=COIL_COUNT, device_id=self.device_id)
+        except Exception as err:  # noqa: BLE001 - optional block, never fatal
+            self._log_coils_unavailable(err)
+            return None
+        if response.isError():
+            self._log_coils_unavailable(response)
+            return None
+        self._coil_warning_logged = False
+        return [bool(value) for value in response.bits[:COIL_COUNT]]
+
+    def _log_coils_unavailable(self, reason: object) -> None:
+        """Warn once that the mode coils cannot be read."""
+        if not self._coil_warning_logged:
+            self._coil_warning_logged = True
+            self.logger.warning(
+                "Heru at %s did not answer the coil read (%s); mode switches and buttons "
+                "will be unavailable, all other entities are unaffected",
+                self._connection_description,
+                reason,
+            )
+
+    async def async_write_coil(self, coil: int, value: bool) -> None:
+        """Write a coil and refresh state."""
+        try:
+            async with self._request_lock:
+                await self._ensure_connected()
+                response = await self.client.write_coil(address=coil, value=value, device_id=self.device_id)
+
+            if response.isError():
+                raise UpdateFailed(f"Write failed for coil {coil + 1}")
+        except UpdateFailed:
+            raise
+        except Exception as err:
+            self.client.close()
+            self.client = _build_client(self.host, self.port, self.framer)
+            raise UpdateFailed(f"Unexpected Modbus coil write error: {err}") from err
+
+        await self.async_request_refresh()
+
     async def _async_update_data(self) -> HeruData:
         """Fetch data from the Heru unit."""
         request = "connect"
@@ -157,10 +206,13 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
                 holding_response = await self.client.read_holding_registers(address=0, count=2, device_id=self.device_id)
                 self._raise_on_error(holding_response, request)
 
+                coils = await self._async_read_coils()
+
                 return HeruData(
                     input_registers=list(input_response.registers),
                     discrete_inputs=discrete_inputs,
                     holding_registers=list(holding_response.registers),
+                    coils=coils,
                 )
         except UpdateFailed:
             raise
