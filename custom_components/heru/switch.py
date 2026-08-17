@@ -22,6 +22,7 @@ from .const import (
     HOLDING_REGISTER_ELECTRIC_HEATER_CONNECTED,
     HOLDING_REGISTER_SNC_ENABLE,
     HOLDING_REGISTER_WATER_HEATER_CONNECTED,
+    HOLDING_REGISTER_WEEKTIMER_ENABLE,
 )
 from .coordinator import HeruDataUpdateCoordinator
 
@@ -88,6 +89,12 @@ REGISTER_SWITCH_DESCRIPTIONS: tuple[HeruRegisterSwitchDescription, ...] = (
         key="cooler_connected",
         translation_key="cooler_connected",
         register=HOLDING_REGISTER_COOLER_CONNECTED,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    HeruRegisterSwitchDescription(
+        key="weektimer_enable",
+        translation_key="weektimer_enable",
+        register=HOLDING_REGISTER_WEEKTIMER_ENABLE,
         entity_category=EntityCategory.CONFIG,
     ),
     HeruRegisterSwitchDescription(

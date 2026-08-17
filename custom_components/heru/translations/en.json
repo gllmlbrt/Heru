@@ -77,13 +77,34 @@
         "name": "Current weektimer program"
       },
       "current_fan_speed": {
-        "name": "Current fan speed"
+        "name": "Current fan speed",
+        "state": {
+          "off": "Off",
+          "1": "1",
+          "2": "2",
+          "3": "3",
+          "4": "4"
+        }
       },
       "current_supply_fan_step": {
-        "name": "Current supply fan step"
+        "name": "Current supply fan step",
+        "state": {
+          "off": "Off",
+          "1": "1",
+          "2": "2",
+          "3": "3",
+          "4": "4"
+        }
       },
       "current_exhaust_fan_step": {
-        "name": "Current exhaust fan step"
+        "name": "Current exhaust fan step",
+        "state": {
+          "off": "Off",
+          "1": "1",
+          "2": "2",
+          "3": "3",
+          "4": "4"
+        }
       },
       "current_supply_fan_power": {
         "name": "Current supply fan power"
@@ -217,6 +238,9 @@
       },
       "summer_night_cooling": {
         "name": "Summer night cooling"
+      },
+      "weektimer_enable": {
+        "name": "Weektimer enable"
       }
     },
     "button": {
@@ -230,6 +254,24 @@
     "number": {
       "freeze_protection_limit": {
         "name": "Freeze protection limit"
+      },
+      "supply_fan_speed_ec": {
+        "name": "Supply fan speed"
+      },
+      "exhaust_fan_speed_ec": {
+        "name": "Exhaust fan speed"
+      }
+    },
+    "select": {
+      "fan_step": {
+        "name": "Fan step",
+        "state": {
+          "off": "Off",
+          "1": "1",
+          "2": "2",
+          "3": "3",
+          "4": "4"
+        }
       }
     }
   }
