@@ -70,9 +70,9 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         try:
             async with self._request_lock:
                 await self._ensure_connected()
-                input_response = await self.client.read_input_registers(address=0, count=33, slave=DEFAULT_SLAVE)
-                discrete_response = await self.client.read_discrete_inputs(address=0, count=34, slave=DEFAULT_SLAVE)
-                holding_response = await self.client.read_holding_registers(address=0, count=2, slave=DEFAULT_SLAVE)
+                input_response = await self.client.read_input_registers(address=0, count=33, device_id=DEFAULT_SLAVE)
+                discrete_response = await self.client.read_discrete_inputs(address=0, count=34, device_id=DEFAULT_SLAVE)
+                holding_response = await self.client.read_holding_registers(address=0, count=2, device_id=DEFAULT_SLAVE)
 
                 if input_response.isError() or discrete_response.isError() or holding_response.isError():
                     raise UpdateFailed("Failed to read one or more Modbus registers")
@@ -94,7 +94,7 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         try:
             async with self._request_lock:
                 await self._ensure_connected()
-                response = await self.client.write_register(address=register, value=value, slave=DEFAULT_SLAVE)
+                response = await self.client.write_register(address=register, value=value, device_id=DEFAULT_SLAVE)
 
             if response.isError():
                 raise UpdateFailed(f"Write failed for register {register + 1}")
