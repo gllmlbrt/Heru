@@ -11,6 +11,7 @@
   "loggers": [
     "pymodbus"
   ],
+  "homeassistant": "2024.1.0",
   "requirements": [
     "pymodbus==3.6.9"
   ],
