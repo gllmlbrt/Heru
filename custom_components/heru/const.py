@@ -34,6 +34,22 @@ COIL_RESET_FILTER_TIMER = 5
 # Temperatures are reported in tenths of a degree as signed 16-bit values.
 TEMPERATURE_SCALE = 0.1
 
+# Configuration holding registers 4x00016 - 4x00052, read as one optional
+# block. The "connected" flags describe which hardware is fitted: the unit
+# marks a temperature sensor as required based on them and raises an
+# open-circuit alarm when a flag is set but no sensor is present.
+HOLDING_CONFIG_START = 15
+HOLDING_CONFIG_COUNT = 37
+
+HOLDING_REGISTER_SNC_ENABLE = 15  # 4x00016, summer night cooling
+HOLDING_REGISTER_FREEZE_PROTECTION_LIMIT = 16  # 4x00017
+HOLDING_REGISTER_WATER_HEATER_CONNECTED = 49  # 4x00050, requires sensor T5
+HOLDING_REGISTER_ELECTRIC_HEATER_CONNECTED = 50  # 4x00051
+HOLDING_REGISTER_COOLER_CONNECTED = 51  # 4x00052
+
+FREEZE_PROTECTION_LIMIT_MIN = 5
+FREEZE_PROTECTION_LIMIT_MAX = 10
+
 HOLDING_REGISTER_USER_FAN_SPEED = 0
 HOLDING_REGISTER_TEMPERATURE_SETPOINT = 1
 INPUT_REGISTER_ROOM_TEMPERATURE = 7
