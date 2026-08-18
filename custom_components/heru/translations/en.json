@@ -260,6 +260,24 @@
       },
       "exhaust_fan_speed_ec": {
         "name": "Exhaust fan speed"
+      },
+      "min_exhaust_fan_speed_ec": {
+        "name": "Min fan speed (away)"
+      },
+      "mod_exhaust_fan_speed_ec": {
+        "name": "Mod fan speed (boost)"
+      },
+      "max_exhaust_fan_speed_ec": {
+        "name": "Max fan speed (boost)"
+      },
+      "boost_speed": {
+        "name": "Boost speed step"
+      },
+      "boost_duration": {
+        "name": "Boost duration"
+      },
+      "overpressure_duration": {
+        "name": "Overpressure duration"
       }
     },
     "select": {

@@ -46,10 +46,20 @@ FAN_STEP_OPTIONS = ["off", "1", "2", "3", "4"]
 # MBR_MAX_REGISTERS = 64 registers, and reading across registers the unit does
 # not implement makes it reject the whole request, so each block stays narrow
 # and covers only what is used. Each block is optional and independent.
-HOLDING_CONFIG_BLOCKS = ((2, 2), (15, 2), (49, 3), (68, 1))
+HOLDING_CONFIG_BLOCKS = ((2, 5), (15, 2), (25, 3), (49, 3), (68, 1))
 
 HOLDING_REGISTER_SUPPLY_FAN_SPEED_EC = 2  # 4x00003, percent
 HOLDING_REGISTER_EXHAUST_FAN_SPEED_EC = 3  # 4x00004, percent
+# On EC fans the mode coils do not set a speed directly, they select which of
+# these per-step registers the unit runs at: away uses min, boost uses mod or
+# max depending on 4x00026. If they all hold similar values, switching mode
+# produces no visible change.
+HOLDING_REGISTER_MIN_EXHAUST_FAN_SPEED_EC = 4  # 4x00005, used by away mode
+HOLDING_REGISTER_MOD_EXHAUST_FAN_SPEED_EC = 5  # 4x00006, used by boost
+HOLDING_REGISTER_MAX_EXHAUST_FAN_SPEED_EC = 6  # 4x00007, used by boost
+HOLDING_REGISTER_BOOST_SPEED = 25  # 4x00026, 3 = Mod, 4 = Max
+HOLDING_REGISTER_BOOST_DURATION = 26  # 4x00027, minutes
+HOLDING_REGISTER_OVERPRESSURE_DURATION = 27  # 4x00028, minutes
 HOLDING_REGISTER_WEEKTIMER_ENABLE = 68  # 4x00069
 HOLDING_REGISTER_SNC_ENABLE = 15  # 4x00016, summer night cooling
 HOLDING_REGISTER_FREEZE_PROTECTION_LIMIT = 16  # 4x00017
