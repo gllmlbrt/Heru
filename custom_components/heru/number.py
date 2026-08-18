@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberEntityDescription
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfTemperature
+from homeassistant.const import PERCENTAGE, UnitOfTemperature, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -14,7 +14,13 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     DOMAIN,
+    HOLDING_REGISTER_BOOST_DURATION,
+    HOLDING_REGISTER_BOOST_SPEED,
     HOLDING_REGISTER_EXHAUST_FAN_SPEED_EC,
+    HOLDING_REGISTER_MAX_EXHAUST_FAN_SPEED_EC,
+    HOLDING_REGISTER_MIN_EXHAUST_FAN_SPEED_EC,
+    HOLDING_REGISTER_MOD_EXHAUST_FAN_SPEED_EC,
+    HOLDING_REGISTER_OVERPRESSURE_DURATION,
     HOLDING_REGISTER_SUPPLY_FAN_SPEED_EC,
     FREEZE_PROTECTION_LIMIT_MAX,
     FREEZE_PROTECTION_LIMIT_MIN,
@@ -62,6 +68,66 @@ NUMBER_DESCRIPTIONS: tuple[HeruNumberDescription, ...] = (
         native_min_value=0,
         native_max_value=100,
         native_step=1,
+    ),
+    # What each mode actually runs at on an EC unit.
+    HeruNumberDescription(
+        key="min_exhaust_fan_speed_ec",
+        translation_key="min_exhaust_fan_speed_ec",
+        register=HOLDING_REGISTER_MIN_EXHAUST_FAN_SPEED_EC,
+        native_unit_of_measurement=PERCENTAGE,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    HeruNumberDescription(
+        key="mod_exhaust_fan_speed_ec",
+        translation_key="mod_exhaust_fan_speed_ec",
+        register=HOLDING_REGISTER_MOD_EXHAUST_FAN_SPEED_EC,
+        native_unit_of_measurement=PERCENTAGE,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    HeruNumberDescription(
+        key="max_exhaust_fan_speed_ec",
+        translation_key="max_exhaust_fan_speed_ec",
+        register=HOLDING_REGISTER_MAX_EXHAUST_FAN_SPEED_EC,
+        native_unit_of_measurement=PERCENTAGE,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    HeruNumberDescription(
+        key="boost_speed",
+        translation_key="boost_speed",
+        register=HOLDING_REGISTER_BOOST_SPEED,
+        native_min_value=3,
+        native_max_value=4,
+        native_step=1,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    HeruNumberDescription(
+        key="boost_duration",
+        translation_key="boost_duration",
+        register=HOLDING_REGISTER_BOOST_DURATION,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        native_min_value=10,
+        native_max_value=240,
+        native_step=1,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    HeruNumberDescription(
+        key="overpressure_duration",
+        translation_key="overpressure_duration",
+        register=HOLDING_REGISTER_OVERPRESSURE_DURATION,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        native_min_value=10,
+        native_max_value=60,
+        native_step=1,
+        entity_category=EntityCategory.CONFIG,
     ),
 )
 
