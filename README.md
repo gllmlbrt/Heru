@@ -57,48 +57,61 @@ HACS can fall back to a commit SHA and show an error like:
    - **Port** (default: `502`)
 4. Submit to create the device and entities.
 
-## Fan control: AC vs EC
+## Fan control
 
-Which entity actually moves the fans depends on the fan type fitted. The unit
-does not report this over Modbus without the service password (`4x01001`), so
-try both:
+Two controls, both verified against a HERU 62-250 Gen 3 with EC fans:
 
-Fan speed is set through the **Supply fan** and **Exhaust fan** entities,
-which write `4x00003` and `4x00004`. Each is a standard fan entity, so it
-takes a percentage, turns off at 0% and restores the previous speed when
-switched back on.
+- **Supply fan** and **Exhaust fan** entities write `4x00003` / `4x00004`.
+  Standard fan entities: a percentage, off at 0%, restoring the previous
+  speed when switched back on. This is the direct control.
+- **Fan step** select gives the unit's own Off / 1-4 steps.
 
-The step register `4x00001` is **not** exposed. The manual marks it "AC fans
-only, and used only while no weektimer is active", and on an EC unit it is
-accepted and ignored, so an entity for it would be a control that silently
-does nothing. AC owners wanting step control would need to add it back.
+The climate entity exposes temperature only. Its on/off uses the Unit on coil
+(`0x00001`), which works with either fan type.
 
-The climate entity exposes temperature only, and its on/off uses the Unit on
-coil (`0x00001`), which works with either fan type.
+### The step register cannot be written here
+
+`4x00001` is the documented way to command a step, and the manual marks it
+"AC fans only, and used only while no weektimer is active". On this unit a
+write is acknowledged - the function code 6 response echoes the value - and
+then discarded: reading back returns the previous value and the step sensors
+do not move.
+
+So **Fan step** commands the modes instead, which the unit does honour. Each
+mode selects one of the per-step speed registers:
+
+| Step | Mode set | Speed the unit runs at |
+| --- | --- | --- |
+| Off | Unit on = off | - |
+| 1 | Away | Min fan speed (`4x00005`) |
+| 2 | no mode | the fan entities (`4x00003` / `4x00004`) |
+| 3 | Boost, `4x00026` = 3 | Mod fan speed (`4x00006`) |
+| 4 | Boost, `4x00026` = 4 | Max fan speed (`4x00007`) |
+
+Two consequences worth knowing:
+
+- **Steps 3 and 4 are not permanent.** They use boost, which the unit ends by
+  itself after the boost duration (`4x00027`). The select reads back from
+  `3x00023`, the step actually running, so an expired boost shows as the step
+  now in effect rather than the one requested.
+- **A mode can appear to do nothing.** It only selects between the per-step
+  registers, so if Min, Mod and Max hold values close to the speed already
+  running, the mode changes and the fans do not. Set them to distinct values.
+
+`Current fan speed` (`3x00022`) mirrors the unwritable `4x00001`, so it stays
+at whatever the unit has stored and is a diagnostic only. The readings that
+track reality are `Current supply/exhaust fan step`.
 
 ### Setpoint vs actual speed
 
-A fan entity's percentage is the commanded base speed. Boost, Away and
-Overpressure do not overwrite it - the unit overlays its own speed while the
-mode is active and returns to the commanded value afterwards, so the fan
-entity stays where you left it throughout.
+A fan entity's percentage is the commanded base speed, which is what step 2
+runs at. Boost, Away and Overpressure do not overwrite it - the unit runs at
+their own register while the mode is active and returns to the commanded
+value afterwards, so the fan entity stays where you left it throughout.
 
 The speed actually running is on each fan as the `current_power` and
 `current_rpm` attributes, and as the **Current supply/exhaust fan power**
 sensors (`3x00025`, `3x00026`).
-
-### Why the mode switches can appear to do nothing
-
-On EC fans the Boost, Away and Overpressure coils do not set a speed. They
-select which per-step register the unit runs at:
-
-- Away uses **Min fan speed** (`4x00005`)
-- Boost uses **Mod** (`4x00006`) or **Max** (`4x00007`), chosen by
-  **Boost speed step** (`4x00026`: 3 = Mod, 4 = Max)
-
-The coil write succeeds and the mode switch stays on, but if those registers
-hold values close to the speed already running, nothing visibly changes. Set
-them to distinct values to make the modes take effect.
 
 ## Register Reference
 
