@@ -16,12 +16,10 @@ from .const import (
     DOMAIN,
     HOLDING_REGISTER_BOOST_DURATION,
     HOLDING_REGISTER_BOOST_SPEED,
-    HOLDING_REGISTER_EXHAUST_FAN_SPEED_EC,
     HOLDING_REGISTER_MAX_EXHAUST_FAN_SPEED_EC,
     HOLDING_REGISTER_MIN_EXHAUST_FAN_SPEED_EC,
     HOLDING_REGISTER_MOD_EXHAUST_FAN_SPEED_EC,
     HOLDING_REGISTER_OVERPRESSURE_DURATION,
-    HOLDING_REGISTER_SUPPLY_FAN_SPEED_EC,
     FREEZE_PROTECTION_LIMIT_MAX,
     FREEZE_PROTECTION_LIMIT_MIN,
     HOLDING_REGISTER_FREEZE_PROTECTION_LIMIT,
@@ -49,25 +47,6 @@ NUMBER_DESCRIPTIONS: tuple[HeruNumberDescription, ...] = (
         native_max_value=FREEZE_PROTECTION_LIMIT_MAX,
         native_step=1,
         entity_category=EntityCategory.CONFIG,
-    ),
-    # EC fans ignore the 4x00001 step register and follow these instead.
-    HeruNumberDescription(
-        key="supply_fan_speed_ec",
-        translation_key="supply_fan_speed_ec",
-        register=HOLDING_REGISTER_SUPPLY_FAN_SPEED_EC,
-        native_unit_of_measurement=PERCENTAGE,
-        native_min_value=0,
-        native_max_value=100,
-        native_step=1,
-    ),
-    HeruNumberDescription(
-        key="exhaust_fan_speed_ec",
-        translation_key="exhaust_fan_speed_ec",
-        register=HOLDING_REGISTER_EXHAUST_FAN_SPEED_EC,
-        native_unit_of_measurement=PERCENTAGE,
-        native_min_value=0,
-        native_max_value=100,
-        native_step=1,
     ),
     # What each mode actually runs at on an EC unit.
     HeruNumberDescription(

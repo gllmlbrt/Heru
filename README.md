@@ -63,8 +63,10 @@ Which entity actually moves the fans depends on the fan type fitted. The unit
 does not report this over Modbus without the service password (`4x01001`), so
 try both:
 
-Fan speed is set through the **Supply/Exhaust fan speed setpoint** numbers,
-which write `4x00003` and `4x00004`.
+Fan speed is set through the **Supply fan** and **Exhaust fan** entities,
+which write `4x00003` and `4x00004`. Each is a standard fan entity, so it
+takes a percentage, turns off at 0% and restores the previous speed when
+switched back on.
 
 The step register `4x00001` is **not** exposed. The manual marks it "AC fans
 only, and used only while no weektimer is active", and on an EC unit it is
@@ -76,13 +78,14 @@ coil (`0x00001`), which works with either fan type.
 
 ### Setpoint vs actual speed
 
-The **Supply/Exhaust fan speed setpoint** numbers are the commanded base
-speed. Boost, Away and Overpressure do not overwrite them - the unit overlays
-its own speed while the mode is active and returns to the setpoint afterwards,
-so the numbers stay where you left them throughout.
+A fan entity's percentage is the commanded base speed. Boost, Away and
+Overpressure do not overwrite it - the unit overlays its own speed while the
+mode is active and returns to the commanded value afterwards, so the fan
+entity stays where you left it throughout.
 
-The speed actually running is reported by the **Current supply/exhaust fan
-power** sensors (`3x00025`, `3x00026`).
+The speed actually running is on each fan as the `current_power` and
+`current_rpm` attributes, and as the **Current supply/exhaust fan power**
+sensors (`3x00025`, `3x00026`).
 
 ### Why the mode switches can appear to do nothing
 

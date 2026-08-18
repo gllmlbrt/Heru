@@ -78,6 +78,12 @@ INPUT_REGISTER_ROOM_TEMPERATURE = 7
 # recovery, so it tracks the outdoor side instead.
 INPUT_REGISTER_EXHAUST_AIR_TEMPERATURE = 3
 
+# Actual running values, reported alongside the commanded setpoint.
+INPUT_REGISTER_SUPPLY_FAN_POWER = 24  # 3x00025, percent
+INPUT_REGISTER_EXHAUST_FAN_POWER = 25  # 3x00026, percent
+INPUT_REGISTER_SUPPLY_FAN_RPM = 26  # 3x00027
+INPUT_REGISTER_EXHAUST_FAN_RPM = 27  # 3x00028
+
 # 3x00001 "Component ID" always reads 10 on a HERU Gen 3, so it doubles as a
 # check that the configured unit ID and framer actually reach the unit.
 INPUT_REGISTER_COMPONENT_ID = 0
