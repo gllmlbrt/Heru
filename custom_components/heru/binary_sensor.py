@@ -83,6 +83,7 @@ class HeruAlarmBinarySensor(CoordinatorEntity[HeruDataUpdateCoordinator], Binary
     _attr_has_entity_name = True
     _attr_translation_key = "alarm"
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(self, coordinator: HeruDataUpdateCoordinator, entry: ConfigEntry) -> None:
         """Initialize the alarm summary."""
