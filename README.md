@@ -66,10 +66,15 @@ try both:
 | Entity | Register | Applies to |
 | --- | --- | --- |
 | **Supply fan speed**, **Exhaust fan speed** (%) | `4x00003`, `4x00004` | **EC fans** |
-| Fan step (dropdown), climate fan mode | `4x00001` | AC fans only, and only while no weektimer program is active |
+| Fan step (dropdown) | `4x00001` | AC fans only, and only while no weektimer program is active |
 
 If the percentage sliders change the RPM and the step dropdown does nothing,
 the unit has EC fans and `4x00001` is stored but ignored.
+
+The **Fan step** select is disabled by default for that reason - on an EC unit
+it would accept selections the unit ignores. Enable it from the entity settings
+on an AC unit. The climate entity exposes temperature only, and its on/off uses
+the Unit on coil (`0x00001`), which works with either fan type.
 
 ### Why the mode switches can appear to do nothing
 

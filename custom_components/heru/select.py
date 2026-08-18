@@ -28,6 +28,9 @@ class HeruFanStepSelect(CoordinatorEntity[HeruDataUpdateCoordinator], SelectEnti
 
     _attr_has_entity_name = True
     _attr_translation_key = "fan_step"
+    # AC-only, so it is off by default: on an EC unit it would sit in the UI
+    # accepting selections the unit ignores. AC owners can enable it.
+    _attr_entity_registry_enabled_default = False
     _attr_options = FAN_STEP_OPTIONS
 
     def __init__(self, coordinator: HeruDataUpdateCoordinator, entry: ConfigEntry) -> None:
