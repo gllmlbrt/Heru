@@ -76,6 +76,16 @@ it would accept selections the unit ignores. Enable it from the entity settings
 on an AC unit. The climate entity exposes temperature only, and its on/off uses
 the Unit on coil (`0x00001`), which works with either fan type.
 
+### Setpoint vs actual speed
+
+The **Supply/Exhaust fan speed setpoint** numbers are the commanded base
+speed. Boost, Away and Overpressure do not overwrite them - the unit overlays
+its own speed while the mode is active and returns to the setpoint afterwards,
+so the numbers stay where you left them throughout.
+
+The speed actually running is reported by the **Current supply/exhaust fan
+power** sensors (`3x00025`, `3x00026`).
+
 ### Why the mode switches can appear to do nothing
 
 On EC fans the Boost, Away and Overpressure coils do not set a speed. They
