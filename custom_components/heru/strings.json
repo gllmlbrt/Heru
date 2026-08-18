@@ -68,12 +68,6 @@
       "freeze_protection_limit": {
         "name": "Freeze protection limit"
       },
-      "supply_fan_speed_ec": {
-        "name": "Supply fan speed setpoint"
-      },
-      "exhaust_fan_speed_ec": {
-        "name": "Exhaust fan speed setpoint"
-      },
       "min_exhaust_fan_speed_ec": {
         "name": "Min fan speed (away)"
       },
@@ -123,6 +117,14 @@
           "3": "3",
           "4": "4"
         }
+      }
+    },
+    "fan": {
+      "supply_fan": {
+        "name": "Supply fan"
+      },
+      "exhaust_fan": {
+        "name": "Exhaust fan"
       }
     }
   }
