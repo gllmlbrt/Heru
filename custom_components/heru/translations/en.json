@@ -135,6 +135,9 @@
       }
     },
     "binary_sensor": {
+      "alarm": {
+        "name": "Alarm"
+      },
       "fire_alarm_switch": {
         "name": "Fire alarm switch"
       },
@@ -146,45 +149,6 @@
       },
       "aux_switch": {
         "name": "Aux switch"
-      },
-      "fire_alarm": {
-        "name": "Fire alarm"
-      },
-      "rotor_alarm": {
-        "name": "Rotor alarm"
-      },
-      "freeze_alarm": {
-        "name": "Freeze alarm"
-      },
-      "low_supply_alarm": {
-        "name": "Low supply alarm"
-      },
-      "low_rotor_temperature_alarm": {
-        "name": "Low rotor temperature alarm"
-      },
-      "temperature_sensor_open_circuit_alarm": {
-        "name": "Temperature sensor open circuit alarm"
-      },
-      "temperature_sensor_short_circuit_alarm": {
-        "name": "Temperature sensor short circuit alarm"
-      },
-      "pulser_alarm": {
-        "name": "Pulser alarm"
-      },
-      "supply_fan_alarm": {
-        "name": "Supply fan alarm"
-      },
-      "exhaust_fan_alarm": {
-        "name": "Exhaust fan alarm"
-      },
-      "supply_filter_alarm": {
-        "name": "Supply filter alarm"
-      },
-      "exhaust_filter_alarm": {
-        "name": "Exhaust filter alarm"
-      },
-      "filter_timer_alarm": {
-        "name": "Filter timer alarm"
       },
       "freeze_protection_b_level": {
         "name": "Freeze protection B level"
