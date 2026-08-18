@@ -57,6 +57,33 @@ HACS can fall back to a commit SHA and show an error like:
    - **Port** (default: `502`)
 4. Submit to create the device and entities.
 
+## Fan control: AC vs EC
+
+Which entity actually moves the fans depends on the fan type fitted. The unit
+does not report this over Modbus without the service password (`4x01001`), so
+try both:
+
+| Entity | Register | Applies to |
+| --- | --- | --- |
+| **Supply fan speed**, **Exhaust fan speed** (%) | `4x00003`, `4x00004` | **EC fans** |
+| Fan step (dropdown), climate fan mode | `4x00001` | AC fans only, and only while no weektimer program is active |
+
+If the percentage sliders change the RPM and the step dropdown does nothing,
+the unit has EC fans and `4x00001` is stored but ignored.
+
+### Why the mode switches can appear to do nothing
+
+On EC fans the Boost, Away and Overpressure coils do not set a speed. They
+select which per-step register the unit runs at:
+
+- Away uses **Min fan speed** (`4x00005`)
+- Boost uses **Mod** (`4x00006`) or **Max** (`4x00007`), chosen by
+  **Boost speed step** (`4x00026`: 3 = Mod, 4 = Max)
+
+The coil write succeeds and the mode switch stays on, but if those registers
+hold values close to the speed already running, nothing visibly changes. Set
+them to distinct values to make the modes take effect.
+
 ## Register Reference
 
 This integration is based on:
