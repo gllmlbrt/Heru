@@ -93,18 +93,6 @@
         "name": "Overpressure duration"
       }
     },
-    "select": {
-      "fan_step": {
-        "name": "Fan step",
-        "state": {
-          "off": "Off",
-          "1": "1",
-          "2": "2",
-          "3": "3",
-          "4": "4"
-        }
-      }
-    },
     "sensor": {
       "current_fan_speed": {
         "name": "Current fan speed",
