@@ -31,8 +31,8 @@ class HeruClimateEntity(CoordinatorEntity[HeruDataUpdateCoordinator], ClimateEnt
 
     Fan control is deliberately not exposed here. The fan mode would have to
     write the user fan speed register, which the unit applies to AC fans only;
-    on an EC unit it is stored and ignored. The fan speed setpoint numbers are
-    the fan control.
+    on an EC unit it is stored and ignored. The supply and exhaust fan entities
+    are the fan control, and the fan step select covers the unit's own steps.
     """
 
     _attr_has_entity_name = True
