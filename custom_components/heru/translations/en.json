@@ -256,10 +256,10 @@
         "name": "Freeze protection limit"
       },
       "supply_fan_speed_ec": {
-        "name": "Supply fan speed"
+        "name": "Supply fan speed setpoint"
       },
       "exhaust_fan_speed_ec": {
-        "name": "Exhaust fan speed"
+        "name": "Exhaust fan speed setpoint"
       },
       "min_exhaust_fan_speed_ec": {
         "name": "Min fan speed (away)"
