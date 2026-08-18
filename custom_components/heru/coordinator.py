@@ -17,8 +17,7 @@ from pymodbus.client import AsyncModbusTcpClient
 
 from .const import (
     COIL_COUNT,
-    HOLDING_CONFIG_COUNT,
-    HOLDING_CONFIG_START,
+    HOLDING_CONFIG_BLOCKS,
     DEFAULT_FRAMER,
     DEFAULT_SLAVE,
     DISCRETE_INPUT_BLOCKS,
@@ -72,7 +71,7 @@ class HeruData:
     discrete_inputs: list[bool]
     holding_registers: list[int]
     coils: list[bool] | None
-    config_registers: list[int] | None
+    config_registers: dict[int, int] | None
 
 
 class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
@@ -166,24 +165,30 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
                 reason,
             )
 
-    async def _async_read_config_registers(self) -> list[int] | None:
-        """Read the configuration registers, or None if unsupported.
+    async def _async_read_config_registers(self) -> dict[int, int] | None:
+        """Read the configuration register blocks, keyed by absolute index.
 
-        Optional like the coils: a unit that rejects the block keeps every
-        other entity working.
+        Optional like the coils, and per block: a unit that rejects one block
+        still reports the others, and every other entity keeps working.
         """
-        try:
-            response = await self.client.read_holding_registers(
-                address=HOLDING_CONFIG_START, count=HOLDING_CONFIG_COUNT, device_id=self.device_id
-            )
-        except Exception as err:  # noqa: BLE001 - optional block, never fatal
-            self._log_config_unavailable(err)
-            return None
-        if response.isError():
-            self._log_config_unavailable(response)
+        values: dict[int, int] = {}
+        for address, count in HOLDING_CONFIG_BLOCKS:
+            try:
+                response = await self.client.read_holding_registers(
+                    address=address, count=count, device_id=self.device_id
+                )
+            except Exception as err:  # noqa: BLE001 - optional block, never fatal
+                self._log_config_unavailable(err)
+                continue
+            if response.isError():
+                self._log_config_unavailable(response)
+                continue
+            for offset, value in enumerate(response.registers[:count]):
+                values[address + offset] = value
+        if not values:
             return None
         self._config_warning_logged = False
-        return list(response.registers)
+        return values
 
     def _log_config_unavailable(self, reason: object) -> None:
         """Warn once that the configuration registers cannot be read."""
@@ -199,18 +204,17 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
     def config_register(self, index: int) -> int | None:
         """Return a configuration register by its absolute index."""
         registers = self.data.config_registers
-        if registers is None:
-            return None
-        offset = index - HOLDING_CONFIG_START
-        if 0 <= offset < len(registers):
-            return registers[offset]
-        return None
+        return None if registers is None else registers.get(index)
 
     async def async_write_coil(self, coil: int, value: bool) -> None:
         """Write a coil and refresh state."""
         try:
             async with self._request_lock:
                 await self._ensure_connected()
+                self.logger.debug(
+                    "Writing coil 0x%05d = %s on %s",
+                    coil + 1, value, self._connection_description,
+                )
                 response = await self.client.write_coil(address=coil, value=value, device_id=self.device_id)
 
             if response.isError():
@@ -274,6 +278,10 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         try:
             async with self._request_lock:
                 await self._ensure_connected()
+                self.logger.debug(
+                    "Writing holding register 4x%05d = %s on %s",
+                    register + 1, value, self._connection_description,
+                )
                 response = await self.client.write_register(address=register, value=value, device_id=self.device_id)
 
             if response.isError():

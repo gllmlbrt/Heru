@@ -41,12 +41,12 @@ POWER_255_TO_PERCENT = 100 / 255
 # the step numbers are used here so they line up with the unit's own display.
 FAN_STEP_OPTIONS = ["off", "1", "2", "3", "4"]
 
-# Configuration holding registers 4x00003 - 4x00069, read as one optional
-# block. The "connected" flags describe which hardware is fitted: the unit
-# marks a temperature sensor as required based on them and raises an
-# open-circuit alarm when a flag is set but no sensor is present.
-HOLDING_CONFIG_START = 2
-HOLDING_CONFIG_COUNT = 67
+# Configuration holding registers, fetched as small (address, count) blocks
+# rather than one span. A Tasmota Modbus bridge caps a response at
+# MBR_MAX_REGISTERS = 64 registers, and reading across registers the unit does
+# not implement makes it reject the whole request, so each block stays narrow
+# and covers only what is used. Each block is optional and independent.
+HOLDING_CONFIG_BLOCKS = ((2, 2), (15, 2), (49, 3), (68, 1))
 
 HOLDING_REGISTER_SUPPLY_FAN_SPEED_EC = 2  # 4x00003, percent
 HOLDING_REGISTER_EXHAUST_FAN_SPEED_EC = 3  # 4x00004, percent
