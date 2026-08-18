@@ -62,7 +62,7 @@ SENSOR_DESCRIPTIONS: tuple[HeruSensorDescription, ...] = (
     HeruSensorDescription(key="sensors_shorted", translation_key="sensors_shorted", register_index=18, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="filter_days_left", translation_key="filter_days_left", register_index=19, device_class=SensorDeviceClass.DURATION, native_unit_of_measurement=UnitOfTime.DAYS, state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="current_weektimer_program", translation_key="current_weektimer_program", register_index=20, entity_category=EntityCategory.DIAGNOSTIC),
-    HeruSensorDescription(key="current_fan_speed", translation_key="current_fan_speed", register_index=21, value_fn=_fan_speed_option, device_class=SensorDeviceClass.ENUM, options=FAN_STEP_OPTIONS),
+    HeruSensorDescription(key="current_fan_speed", translation_key="current_fan_speed", register_index=21, value_fn=_fan_speed_option, device_class=SensorDeviceClass.ENUM, options=FAN_STEP_OPTIONS, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="current_supply_fan_step", translation_key="current_supply_fan_step", register_index=22, value_fn=_fan_speed_option, device_class=SensorDeviceClass.ENUM, options=FAN_STEP_OPTIONS, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="current_exhaust_fan_step", translation_key="current_exhaust_fan_step", register_index=23, value_fn=_fan_speed_option, device_class=SensorDeviceClass.ENUM, options=FAN_STEP_OPTIONS, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="current_supply_fan_power", translation_key="current_supply_fan_power", register_index=24, native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT),

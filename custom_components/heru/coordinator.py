@@ -206,8 +206,8 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
         registers = self.data.config_registers
         return None if registers is None else registers.get(index)
 
-    async def async_write_coil(self, coil: int, value: bool) -> None:
-        """Write a coil and refresh state."""
+    async def async_write_coil(self, coil: int, value: bool, refresh: bool = True) -> None:
+        """Write a coil, refreshing unless part of a larger sequence."""
         try:
             async with self._request_lock:
                 await self._ensure_connected()
@@ -226,7 +226,8 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
             self.client = _build_client(self.host, self.port, self.framer)
             raise UpdateFailed(f"Unexpected Modbus coil write error: {err}") from err
 
-        await self.async_request_refresh()
+        if refresh:
+            await self.async_request_refresh()
 
     async def _async_update_data(self) -> HeruData:
         """Fetch data from the Heru unit."""
@@ -273,8 +274,8 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
                 f"Modbus {request} failed against {self._connection_description}: {err}"
             ) from err
 
-    async def async_write_holding_register(self, register: int, value: int) -> None:
-        """Write a holding register and refresh state."""
+    async def async_write_holding_register(self, register: int, value: int, refresh: bool = True) -> None:
+        """Write a holding register, refreshing unless part of a larger sequence."""
         try:
             async with self._request_lock:
                 await self._ensure_connected()
@@ -293,4 +294,5 @@ class HeruDataUpdateCoordinator(DataUpdateCoordinator[HeruData]):
             self.client = _build_client(self.host, self.port, self.framer)
             raise UpdateFailed(f"Unexpected Modbus write error: {err}") from err
 
-        await self.async_request_refresh()
+        if refresh:
+            await self.async_request_refresh()

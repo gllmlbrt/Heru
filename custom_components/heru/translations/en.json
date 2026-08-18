@@ -245,6 +245,18 @@
       "exhaust_fan": {
         "name": "Exhaust fan"
       }
+    },
+    "select": {
+      "fan_step": {
+        "name": "Fan step",
+        "state": {
+          "off": "Off",
+          "1": "1",
+          "2": "2",
+          "3": "3",
+          "4": "4"
+        }
+      }
     }
   }
 }
