@@ -126,6 +126,11 @@
       "exhaust_fan": {
         "name": "Exhaust fan"
       }
+    },
+    "binary_sensor": {
+      "alarm": {
+        "name": "Alarm"
+      }
     }
   }
 }

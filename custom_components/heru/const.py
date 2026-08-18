@@ -19,7 +19,27 @@ FRAMER_OPTIONS = [FRAMER_SOCKET, FRAMER_RTU]
 # address", so the discrete inputs are fetched as two contiguous blocks of
 # (address, count) and reassembled into one 34-entry list.
 DISCRETE_INPUT_COUNT = 34
+
 DISCRETE_INPUT_BLOCKS = ((0, 4), (9, 25))
+
+# 1x00010 - 1x00025 are the alarm bits. They are reported as one entity that
+# lists whichever are active, rather than thirteen separate binary sensors.
+# Names are plain strings because state attributes are not translated.
+ALARM_BITS: tuple[tuple[int, str], ...] = (
+    (9, "Fire alarm"),
+    (10, "Rotor alarm"),
+    (12, "Freeze alarm"),
+    (13, "Low supply alarm"),
+    (14, "Low rotor temperature alarm"),
+    (17, "Temperature sensor open circuit alarm"),
+    (18, "Temperature sensor short circuit alarm"),
+    (19, "Pulser alarm"),
+    (20, "Supply fan alarm"),
+    (21, "Exhaust fan alarm"),
+    (22, "Supply filter alarm"),
+    (23, "Exhaust filter alarm"),
+    (24, "Filter timer alarm"),
+)
 
 # Coils 0x00001 - 0x00006 are contiguous and read/write. The last two are
 # momentary: they act on write and always read back 0.
