@@ -63,18 +63,16 @@ Which entity actually moves the fans depends on the fan type fitted. The unit
 does not report this over Modbus without the service password (`4x01001`), so
 try both:
 
-| Entity | Register | Applies to |
-| --- | --- | --- |
-| **Supply fan speed**, **Exhaust fan speed** (%) | `4x00003`, `4x00004` | **EC fans** |
-| Fan step (dropdown) | `4x00001` | AC fans only, and only while no weektimer program is active |
+Fan speed is set through the **Supply/Exhaust fan speed setpoint** numbers,
+which write `4x00003` and `4x00004`.
 
-If the percentage sliders change the RPM and the step dropdown does nothing,
-the unit has EC fans and `4x00001` is stored but ignored.
+The step register `4x00001` is **not** exposed. The manual marks it "AC fans
+only, and used only while no weektimer is active", and on an EC unit it is
+accepted and ignored, so an entity for it would be a control that silently
+does nothing. AC owners wanting step control would need to add it back.
 
-The **Fan step** select is disabled by default for that reason - on an EC unit
-it would accept selections the unit ignores. Enable it from the entity settings
-on an AC unit. The climate entity exposes temperature only, and its on/off uses
-the Unit on coil (`0x00001`), which works with either fan type.
+The climate entity exposes temperature only, and its on/off uses the Unit on
+coil (`0x00001`), which works with either fan type.
 
 ### Setpoint vs actual speed
 
