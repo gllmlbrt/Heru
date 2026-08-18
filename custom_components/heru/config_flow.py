@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.helpers.selector import (
     SelectSelector,
@@ -24,11 +24,6 @@ from .const import (
     FRAMER_OPTIONS,
 )
 from .coordinator import async_probe_unit
-
-try:
-    from homeassistant.config_entries import ConfigFlowResult
-except ImportError:  # HA < 2024.6 does not export ConfigFlowResult here
-    from homeassistant.data_entry_flow import FlowResult as ConfigFlowResult
 
 
 class HeruConfigFlow(ConfigFlow, domain=DOMAIN):
