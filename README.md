@@ -113,6 +113,26 @@ The speed actually running is on each fan as the `current_power` and
 `current_rpm` attributes, and as the **Current supply/exhaust fan power**
 sensors (`3x00025`, `3x00026`).
 
+## Summer night cooling
+
+The manual only ever writes "SNC" and never expands it, but the four registers
+describe free cooling: ventilate with cool outside air instead of recovering
+heat, when doing so will actually cool the house.
+
+| Entity | Register | Decides |
+| --- | --- | --- |
+| Summer night cooling | `4x00016` | whether the feature runs at all |
+| Summer night cooling high limit | `4x00015` | start - extract air above this means the house is too warm |
+| Summer night cooling low limit | `4x00014` | stop - do not cool the house below this |
+| Summer night cooling difference | `4x00013` | outside must be at least this much cooler than inside |
+
+The difference limit is what stops the unit running its fans for nothing when
+the outside air is barely cooler than the house. The register holds tenths of
+a degree; the entity shows whole degrees.
+
+Nothing in these registers references a clock, so whether the unit restricts
+this to night hours by itself is not visible over Modbus.
+
 ## Register Reference
 
 This integration is based on:

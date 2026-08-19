@@ -20,6 +20,15 @@ from .const import (
     HOLDING_REGISTER_MIN_EXHAUST_FAN_SPEED_EC,
     HOLDING_REGISTER_MOD_EXHAUST_FAN_SPEED_EC,
     HOLDING_REGISTER_OVERPRESSURE_DURATION,
+    HOLDING_REGISTER_SNC_DIFF_LIMIT,
+    HOLDING_REGISTER_SNC_HIGH_LIMIT,
+    HOLDING_REGISTER_SNC_LOW_LIMIT,
+    SNC_DIFF_LIMIT_MAX,
+    SNC_DIFF_LIMIT_MIN,
+    SNC_HIGH_LIMIT_MAX,
+    SNC_HIGH_LIMIT_MIN,
+    SNC_LOW_LIMIT_MAX,
+    SNC_LOW_LIMIT_MIN,
     FREEZE_PROTECTION_LIMIT_MAX,
     FREEZE_PROTECTION_LIMIT_MIN,
     HOLDING_REGISTER_FREEZE_PROTECTION_LIMIT,
@@ -32,6 +41,7 @@ class HeruNumberDescription(NumberEntityDescription):
     """Description of a Heru number backed by a holding register."""
 
     register: int
+    scale: float = 1.0
 
 
 # Freeze protection has no enable register on this unit, only the limit below
@@ -98,6 +108,41 @@ NUMBER_DESCRIPTIONS: tuple[HeruNumberDescription, ...] = (
         native_step=1,
         entity_category=EntityCategory.CONFIG,
     ),
+    # 4x00013 - 4x00015 decide when free cooling runs. Without them the enable
+    # switch acts on whatever thresholds the unit happens to hold.
+    HeruNumberDescription(
+        key="snc_high_limit",
+        translation_key="snc_high_limit",
+        register=HOLDING_REGISTER_SNC_HIGH_LIMIT,
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=SNC_HIGH_LIMIT_MIN,
+        native_max_value=SNC_HIGH_LIMIT_MAX,
+        native_step=1,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    HeruNumberDescription(
+        key="snc_low_limit",
+        translation_key="snc_low_limit",
+        register=HOLDING_REGISTER_SNC_LOW_LIMIT,
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=SNC_LOW_LIMIT_MIN,
+        native_max_value=SNC_LOW_LIMIT_MAX,
+        native_step=1,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    HeruNumberDescription(
+        key="snc_diff_limit",
+        translation_key="snc_diff_limit",
+        register=HOLDING_REGISTER_SNC_DIFF_LIMIT,
+        scale=0.1,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=SNC_DIFF_LIMIT_MIN,
+        native_max_value=SNC_DIFF_LIMIT_MAX,
+        native_step=0.1,
+        entity_category=EntityCategory.CONFIG,
+    ),
     HeruNumberDescription(
         key="overpressure_duration",
         translation_key="overpressure_duration",
@@ -141,10 +186,14 @@ class HeruNumberEntity(CoordinatorEntity[HeruDataUpdateCoordinator], NumberEntit
 
     @property
     def native_value(self) -> float | None:
-        """Return the configured value."""
+        """Return the configured value, in the unit the register reports."""
         value = self.coordinator.config_register(self.entity_description.register)
-        return None if value is None else float(value)
+        if value is None:
+            return None
+        scale = self.entity_description.scale
+        return float(value) if scale == 1.0 else round(value * scale, 1)
 
     async def async_set_native_value(self, value: float) -> None:
-        """Write the configured value."""
-        await self.coordinator.async_write_holding_register(self.entity_description.register, int(round(value)))
+        """Write the configured value back in the register's own unit."""
+        raw = int(round(value / self.entity_description.scale))
+        await self.coordinator.async_write_holding_register(self.entity_description.register, raw)

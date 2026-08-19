@@ -85,6 +85,15 @@
       },
       "overpressure_duration": {
         "name": "Overpressure duration"
+      },
+      "snc_high_limit": {
+        "name": "Summer night cooling high limit"
+      },
+      "snc_low_limit": {
+        "name": "Summer night cooling low limit"
+      },
+      "snc_diff_limit": {
+        "name": "Summer night cooling difference"
       }
     },
     "sensor": {

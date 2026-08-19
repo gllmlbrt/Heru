@@ -66,7 +66,7 @@ FAN_STEP_OPTIONS = ["off", "1", "2", "3", "4"]
 # MBR_MAX_REGISTERS = 64 registers, and reading across registers the unit does
 # not implement makes it reject the whole request, so each block stays narrow
 # and covers only what is used. Each block is optional and independent.
-HOLDING_CONFIG_BLOCKS = ((2, 5), (15, 2), (25, 3), (49, 3), (68, 1))
+HOLDING_CONFIG_BLOCKS = ((2, 5), (12, 5), (25, 3), (49, 3), (68, 1))
 
 HOLDING_REGISTER_SUPPLY_FAN_SPEED_EC = 2  # 4x00003, percent
 HOLDING_REGISTER_EXHAUST_FAN_SPEED_EC = 3  # 4x00004, percent
@@ -81,11 +81,25 @@ HOLDING_REGISTER_BOOST_SPEED = 25  # 4x00026, 3 = Mod, 4 = Max
 HOLDING_REGISTER_BOOST_DURATION = 26  # 4x00027, minutes
 HOLDING_REGISTER_OVERPRESSURE_DURATION = 27  # 4x00028, minutes
 HOLDING_REGISTER_WEEKTIMER_ENABLE = 68  # 4x00069
-HOLDING_REGISTER_SNC_ENABLE = 15  # 4x00016, summer night cooling
+# Summer night cooling. The manual only ever writes "SNC" and never expands
+# it, but the registers describe free cooling: run when the extract air is
+# above the high limit and the outside air is at least the difference limit
+# cooler, and stop at the low limit so the house is not overcooled.
+HOLDING_REGISTER_SNC_DIFF_LIMIT = 12  # 4x00013, tenths of a degree
+HOLDING_REGISTER_SNC_LOW_LIMIT = 13  # 4x00014
+HOLDING_REGISTER_SNC_HIGH_LIMIT = 14  # 4x00015
+HOLDING_REGISTER_SNC_ENABLE = 15  # 4x00016
 HOLDING_REGISTER_FREEZE_PROTECTION_LIMIT = 16  # 4x00017
 HOLDING_REGISTER_WATER_HEATER_CONNECTED = 49  # 4x00050, requires sensor T5
 HOLDING_REGISTER_ELECTRIC_HEATER_CONNECTED = 50  # 4x00051
 HOLDING_REGISTER_COOLER_CONNECTED = 51  # 4x00052
+
+SNC_DIFF_LIMIT_MIN = 1.0
+SNC_DIFF_LIMIT_MAX = 10.0
+SNC_LOW_LIMIT_MIN = 18
+SNC_LOW_LIMIT_MAX = 24
+SNC_HIGH_LIMIT_MIN = 19
+SNC_HIGH_LIMIT_MAX = 26
 
 FREEZE_PROTECTION_LIMIT_MIN = 5
 FREEZE_PROTECTION_LIMIT_MAX = 10
