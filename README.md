@@ -133,6 +133,22 @@ a degree; the entity shows whole degrees.
 Nothing in these registers references a clock, so whether the unit restricts
 this to night hours by itself is not visible over Modbus.
 
+## The unit's clock
+
+The unit keeps a weekday and a time of day, but no date, so **System time**
+is text such as `Monday 14:32:05` rather than a timestamp. Its
+`drift_seconds` attribute is how far the unit has wandered from Home
+Assistant, signed and wrapped to the shortest distance so a Sunday to Monday
+rollover reads as seconds rather than days.
+
+**Sync clock** writes Home Assistant's local time to the unit. The registers
+are a buffer and the order of access is part of the protocol:
+
+- `4x00060` weekday - **reading** it copies the unit's time into the buffer,
+  so a read starts here
+- `4x00061` hours, `4x00062` minutes - staged in the buffer
+- `4x00063` seconds - **writing** it commits the buffer, so a write ends here
+
 ## Register Reference
 
 This integration is based on:

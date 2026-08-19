@@ -66,7 +66,7 @@ FAN_STEP_OPTIONS = ["off", "1", "2", "3", "4"]
 # MBR_MAX_REGISTERS = 64 registers, and reading across registers the unit does
 # not implement makes it reject the whole request, so each block stays narrow
 # and covers only what is used. Each block is optional and independent.
-HOLDING_CONFIG_BLOCKS = ((2, 5), (12, 5), (25, 3), (49, 3), (68, 1))
+HOLDING_CONFIG_BLOCKS = ((2, 5), (12, 5), (25, 3), (49, 3), (59, 4), (68, 1))
 
 HOLDING_REGISTER_SUPPLY_FAN_SPEED_EC = 2  # 4x00003, percent
 HOLDING_REGISTER_EXHAUST_FAN_SPEED_EC = 3  # 4x00004, percent
@@ -81,6 +81,28 @@ HOLDING_REGISTER_BOOST_SPEED = 25  # 4x00026, 3 = Mod, 4 = Max
 HOLDING_REGISTER_BOOST_DURATION = 26  # 4x00027, minutes
 HOLDING_REGISTER_OVERPRESSURE_DURATION = 27  # 4x00028, minutes
 HOLDING_REGISTER_WEEKTIMER_ENABLE = 68  # 4x00069
+
+# 4x00060 - 4x00063 are a buffered clock, and the order of access matters:
+# reading the weekday copies the unit's time into its read/write buffer, and
+# writing the seconds commits the buffer. So a read starts at the weekday and
+# a write ends at the seconds. The unit keeps a weekday and a time of day but
+# no date.
+HOLDING_REGISTER_CLOCK_WEEKDAY = 59  # 4x00060, reading latches the buffer
+HOLDING_REGISTER_CLOCK_HOURS = 60  # 4x00061
+HOLDING_REGISTER_CLOCK_MINUTES = 61  # 4x00062
+HOLDING_REGISTER_CLOCK_SECONDS = 62  # 4x00063, writing commits the buffer
+
+# 0 = Monday ... 6 = Sunday, which matches datetime.weekday().
+WEEKDAY_NAMES = (
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+)
+SECONDS_PER_WEEK = 7 * 24 * 3600
 # Summer night cooling. The manual only ever writes "SNC" and never expands
 # it, but the registers describe free cooling: run when the extract air is
 # above the high limit and the outside air is at least the difference limit
