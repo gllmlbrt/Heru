@@ -132,6 +132,9 @@
       },
       "exhaust_fan_control_voltage": {
         "name": "Exhaust fan control voltage"
+      },
+      "system_time": {
+        "name": "System time"
       }
     },
     "binary_sensor": {
@@ -213,6 +216,9 @@
       },
       "reset_filter_timer": {
         "name": "Reset filter timer"
+      },
+      "sync_clock": {
+        "name": "Sync clock"
       }
     },
     "number": {

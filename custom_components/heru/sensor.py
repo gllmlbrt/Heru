@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
+from typing import Any, Callable
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
@@ -12,9 +12,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from .const import (
     DOMAIN,
+    HOLDING_REGISTER_CLOCK_HOURS,
+    HOLDING_REGISTER_CLOCK_MINUTES,
+    HOLDING_REGISTER_CLOCK_SECONDS,
+    HOLDING_REGISTER_CLOCK_WEEKDAY,
+    SECONDS_PER_WEEK,
+    WEEKDAY_NAMES,
     FAN_STEP_OPTIONS,
     INPUT_REGISTER_ROOM_TEMPERATURE,
     POWER_255_TO_PERCENT,
@@ -80,7 +87,11 @@ SENSOR_DESCRIPTIONS: tuple[HeruSensorDescription, ...] = (
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Set up Heru sensors from a config entry."""
     coordinator: HeruDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(HeruSensorEntity(coordinator, entry, description) for description in SENSOR_DESCRIPTIONS)
+    entities: list[SensorEntity] = [
+        HeruSensorEntity(coordinator, entry, description) for description in SENSOR_DESCRIPTIONS
+    ]
+    entities.append(HeruSystemTimeSensor(coordinator, entry))
+    async_add_entities(entities)
 
 
 class HeruSensorEntity(CoordinatorEntity[HeruDataUpdateCoordinator], SensorEntity):
@@ -112,3 +123,78 @@ class HeruSensorEntity(CoordinatorEntity[HeruDataUpdateCoordinator], SensorEntit
         if self.entity_description.scale == 1.0:
             return int(scaled_value)
         return round(scaled_value, 1)
+
+
+class HeruSystemTimeSensor(CoordinatorEntity[HeruDataUpdateCoordinator], SensorEntity):
+    """The unit's own clock.
+
+    The unit keeps a weekday and a time of day but no date, so this cannot be
+    a timestamp. The drift attribute is how far the unit is from Home
+    Assistant, which is what the sync button corrects.
+    """
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "system_time"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: HeruDataUpdateCoordinator, entry: ConfigEntry) -> None:
+        """Initialize the clock sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{entry.entry_id}_system_time"
+
+    @property
+    def device_info(self):
+        """Return device info."""
+        return self.coordinator.device_info
+
+    @property
+    def _clock(self) -> tuple[int, int, int, int] | None:
+        """Return the unit's weekday, hours, minutes and seconds."""
+        values = [
+            self.coordinator.config_register(register)
+            for register in (
+                HOLDING_REGISTER_CLOCK_WEEKDAY,
+                HOLDING_REGISTER_CLOCK_HOURS,
+                HOLDING_REGISTER_CLOCK_MINUTES,
+                HOLDING_REGISTER_CLOCK_SECONDS,
+            )
+        ]
+        if any(value is None for value in values):
+            return None
+        return tuple(values)  # type: ignore[return-value]
+
+    @property
+    def available(self) -> bool:
+        """Return True if the unit exposes its clock."""
+        return super().available and self._clock is not None
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the unit's weekday and time."""
+        clock = self._clock
+        if clock is None:
+            return None
+        weekday, hours, minutes, seconds = clock
+        name = WEEKDAY_NAMES[weekday] if 0 <= weekday < len(WEEKDAY_NAMES) else "?"
+        return f"{name} {hours:02d}:{minutes:02d}:{seconds:02d}"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the parts, and how far the unit has drifted."""
+        clock = self._clock
+        if clock is None:
+            return None
+        weekday, hours, minutes, seconds = clock
+        now = dt_util.now()
+        unit_of_week = weekday * 86400 + hours * 3600 + minutes * 60 + seconds
+        local_of_week = now.weekday() * 86400 + now.hour * 3600 + now.minute * 60 + now.second
+        # Shortest signed distance, so a Sunday/Monday wrap is seconds not days.
+        drift = (unit_of_week - local_of_week + SECONDS_PER_WEEK // 2) % SECONDS_PER_WEEK
+        drift -= SECONDS_PER_WEEK // 2
+        return {
+            "weekday": weekday,
+            "hours": hours,
+            "minutes": minutes,
+            "seconds": seconds,
+            "drift_seconds": drift,
+        }
