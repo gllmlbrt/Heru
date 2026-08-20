@@ -68,7 +68,7 @@ SENSOR_DESCRIPTIONS: tuple[HeruSensorDescription, ...] = (
     HeruSensorDescription(key="carbon_dioxide", translation_key="carbon_dioxide", register_index=14, device_class=SensorDeviceClass.CO2, native_unit_of_measurement="ppm", state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="sensors_open", translation_key="sensors_open", register_index=17, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="sensors_shorted", translation_key="sensors_shorted", register_index=18, entity_category=EntityCategory.DIAGNOSTIC),
-    HeruSensorDescription(key="filter_days_left", translation_key="filter_days_left", register_index=19, device_class=SensorDeviceClass.DURATION, native_unit_of_measurement=UnitOfTime.DAYS, state_class=SensorStateClass.MEASUREMENT),
+    HeruSensorDescription(key="filter_days_left", translation_key="filter_days_left", register_index=19, device_class=SensorDeviceClass.DURATION, native_unit_of_measurement=UnitOfTime.DAYS, state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="current_weektimer_program", translation_key="current_weektimer_program", register_index=20, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="current_fan_speed", translation_key="current_fan_speed", register_index=21, value_fn=_fan_speed_option, device_class=SensorDeviceClass.ENUM, options=FAN_STEP_OPTIONS, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="current_supply_fan_step", translation_key="current_supply_fan_step", register_index=22, value_fn=_fan_speed_option, device_class=SensorDeviceClass.ENUM, options=FAN_STEP_OPTIONS, entity_category=EntityCategory.DIAGNOSTIC),
@@ -130,11 +130,17 @@ class HeruSensorEntity(CoordinatorEntity[HeruDataUpdateCoordinator], SensorEntit
 class HeruFilterDaysLeftSensor(HeruSensorEntity):
     """Days until the filter change is due.
 
-    The countdown only runs while the filter timer is on. With the filter
-    change period (4x00044) at 0 the unit leaves 3x00020 at 0 whatever else is
-    set, so report no value instead of a countdown that stands still. The
-    period is also carried in the attributes, because 1 - 5 months disables
-    the timer on this unit rather than shortening it.
+    3x00020 reads 0 in two situations that are not a countdown of no days
+    left: the filter timer is off (4x00044 = 0), and a unit whose firmware
+    answers for the register without ever populating it, which is what a
+    HERU 62-250 Gen 3 does even with a period set, the timer reset and no
+    filter alarm raised. Neither is a duration, so report nothing rather
+    than a permanent 0 days.
+
+    A filter that really is due is reported by the filter alarms, which the
+    alarm entity already covers, so nothing is lost by not reporting 0 here.
+    The attributes carry the timer's configuration, because 1 - 5 months
+    disables the timer on this unit rather than shortening it.
     """
 
     @property
@@ -144,10 +150,9 @@ class HeruFilterDaysLeftSensor(HeruSensorEntity):
 
     @property
     def native_value(self):
-        """Return the days left, or nothing while the timer is off."""
-        if self._period == 0:
-            return None
-        return super().native_value
+        """Return the days left, or nothing when the unit reports no count."""
+        value = super().native_value
+        return None if value == 0 else value
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
