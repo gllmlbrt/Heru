@@ -66,7 +66,7 @@ FAN_STEP_OPTIONS = ["off", "1", "2", "3", "4"]
 # MBR_MAX_REGISTERS = 64 registers, and reading across registers the unit does
 # not implement makes it reject the whole request, so each block stays narrow
 # and covers only what is used. Each block is optional and independent.
-HOLDING_CONFIG_BLOCKS = ((2, 5), (12, 5), (25, 3), (49, 3), (59, 4), (68, 1))
+HOLDING_CONFIG_BLOCKS = ((2, 5), (12, 5), (25, 3), (43, 1), (49, 3), (59, 4), (68, 1))
 
 HOLDING_REGISTER_SUPPLY_FAN_SPEED_EC = 2  # 4x00003, percent
 HOLDING_REGISTER_EXHAUST_FAN_SPEED_EC = 3  # 4x00004, percent
@@ -80,6 +80,13 @@ HOLDING_REGISTER_MAX_EXHAUST_FAN_SPEED_EC = 6  # 4x00007, used by boost
 HOLDING_REGISTER_BOOST_SPEED = 25  # 4x00026, 3 = Mod, 4 = Max
 HOLDING_REGISTER_BOOST_DURATION = 26  # 4x00027, minutes
 HOLDING_REGISTER_OVERPRESSURE_DURATION = 27  # 4x00028, minutes
+# 0 turns the filter timer off and 6 - 12 is a period in months of 30 days.
+# The unit coerces anything from 1 to 5 to 0, so those settings silently
+# disable the timer rather than shortening it.
+HOLDING_REGISTER_FILTER_CHANGE_PERIOD = 43  # 4x00044
+FILTER_CHANGE_PERIOD_MIN = 0
+FILTER_CHANGE_PERIOD_MAX = 12
+
 HOLDING_REGISTER_WEEKTIMER_ENABLE = 68  # 4x00069
 
 # 4x00060 - 4x00063 are a buffered clock, and the order of access matters:

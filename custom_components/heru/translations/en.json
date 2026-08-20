@@ -251,6 +251,9 @@
       },
       "snc_diff_limit": {
         "name": "Summer night cooling difference"
+      },
+      "filter_change_period": {
+        "name": "Filter change period"
       }
     },
     "fan": {

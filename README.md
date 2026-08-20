@@ -133,6 +133,19 @@ a degree; the entity shows whole degrees.
 Nothing in these registers references a clock, so whether the unit restricts
 this to night hours by itself is not visible over Modbus.
 
+## Filter change period
+
+**Filter change period** (`4x00044`) is the filter timer, in months of 30
+days. `0` turns the timer off and `6` to `12` set a period. **`1` to `5` are
+not shorter periods** - the manual states the unit turns anything of 5 or
+less into 0, so those settings disable the timer instead. The slider allows
+them because the unit accepts the write; it just reads back as `0` on the
+next poll, which is the unit's own behaviour showing through rather than
+something the integration hides.
+
+Home Assistant renders the month unit as `m`, which reads like minutes next
+to the duration entities. The value is months.
+
 ## The unit's clock
 
 The unit keeps a weekday and a time of day, but no date, so **System time**

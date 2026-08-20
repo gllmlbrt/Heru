@@ -14,7 +14,10 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     DOMAIN,
+    FILTER_CHANGE_PERIOD_MAX,
+    FILTER_CHANGE_PERIOD_MIN,
     HOLDING_REGISTER_BOOST_DURATION,
+    HOLDING_REGISTER_FILTER_CHANGE_PERIOD,
     HOLDING_REGISTER_BOOST_SPEED,
     HOLDING_REGISTER_MAX_EXHAUST_FAN_SPEED_EC,
     HOLDING_REGISTER_MIN_EXHAUST_FAN_SPEED_EC,
@@ -141,6 +144,18 @@ NUMBER_DESCRIPTIONS: tuple[HeruNumberDescription, ...] = (
         native_min_value=SNC_DIFF_LIMIT_MIN,
         native_max_value=SNC_DIFF_LIMIT_MAX,
         native_step=0.1,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    # 0 is off and 6 - 12 is a period; the unit turns 1 - 5 into 0 itself, so a
+    # setting in that range reads back as off on the next poll.
+    HeruNumberDescription(
+        key="filter_change_period",
+        translation_key="filter_change_period",
+        register=HOLDING_REGISTER_FILTER_CHANGE_PERIOD,
+        native_unit_of_measurement=UnitOfTime.MONTHS,
+        native_min_value=FILTER_CHANGE_PERIOD_MIN,
+        native_max_value=FILTER_CHANGE_PERIOD_MAX,
+        native_step=1,
         entity_category=EntityCategory.CONFIG,
     ),
     HeruNumberDescription(
