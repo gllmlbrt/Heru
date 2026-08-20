@@ -20,8 +20,8 @@ Home Assistant custom integration for older generation 3 HERU Östberg ventilati
   - Temperature setpoint (`4x00002`)
   - User fan speed setpoint (`4x00001`)
 - Diagnostic entities (component ID, sensor open/short bit fields, control
-  voltages, fan steps, alarms) are categorised as diagnostics so they stay out
-  of the main device controls.
+  voltages, fan steps, filter days left, alarms) are categorised as
+  diagnostics so they stay out of the main device controls.
 
 ## Install with HACS (Custom Repository)
 
@@ -145,6 +145,33 @@ something the integration hides.
 
 Home Assistant renders the month unit as `m`, which reads like minutes next
 to the duration entities. The value is months.
+
+## Filter days left
+
+**Filter days left** (`3x00020`) is the countdown that the period drives, and
+on a HERU 62-250 Gen 3 it never moves. Verified over Modbus with the unit
+running:
+
+| Read | Value |
+| --- | --- |
+| `4x00044` filter change period | `6` - the timer is on and not coerced |
+| `1x00023` - `1x00025` filter alarms | all clear - nothing is overdue |
+| `4x00060` - `4x00063` clock | live and correct - the unit knows the date |
+| `3x00020` filter days left | `0`, before and after **Reset filter timer** |
+
+The register answers without a Modbus exception, so it exists; it is simply
+never populated, the same way `1x00005` - `1x00009` are documented but
+absent. The v0.7 map covers the whole HERU range and not every model
+implements all of it.
+
+So the sensor reports nothing when the register reads `0`, rather than a
+permanent `0 d` that looks like a filter due today, and sits under
+diagnostics. Its attributes carry `filter_change_period_months` and
+`filter_timer_running` so the timer's configuration stays visible. A filter
+that really is due is reported by the filter alarms, which the alarm entity
+already covers.
+
+If a unit does populate the register, the sensor shows the count as normal.
 
 ## The unit's clock
 

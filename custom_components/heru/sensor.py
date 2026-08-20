@@ -17,6 +17,7 @@ from homeassistant.util import dt as dt_util
 from .const import (
     DOMAIN,
     HOLDING_REGISTER_CLOCK_HOURS,
+    HOLDING_REGISTER_FILTER_CHANGE_PERIOD,
     HOLDING_REGISTER_CLOCK_MINUTES,
     HOLDING_REGISTER_CLOCK_SECONDS,
     HOLDING_REGISTER_CLOCK_WEEKDAY,
@@ -67,7 +68,7 @@ SENSOR_DESCRIPTIONS: tuple[HeruSensorDescription, ...] = (
     HeruSensorDescription(key="carbon_dioxide", translation_key="carbon_dioxide", register_index=14, device_class=SensorDeviceClass.CO2, native_unit_of_measurement="ppm", state_class=SensorStateClass.MEASUREMENT),
     HeruSensorDescription(key="sensors_open", translation_key="sensors_open", register_index=17, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="sensors_shorted", translation_key="sensors_shorted", register_index=18, entity_category=EntityCategory.DIAGNOSTIC),
-    HeruSensorDescription(key="filter_days_left", translation_key="filter_days_left", register_index=19, device_class=SensorDeviceClass.DURATION, native_unit_of_measurement=UnitOfTime.DAYS, state_class=SensorStateClass.MEASUREMENT),
+    HeruSensorDescription(key="filter_days_left", translation_key="filter_days_left", register_index=19, device_class=SensorDeviceClass.DURATION, native_unit_of_measurement=UnitOfTime.DAYS, state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="current_weektimer_program", translation_key="current_weektimer_program", register_index=20, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="current_fan_speed", translation_key="current_fan_speed", register_index=21, value_fn=_fan_speed_option, device_class=SensorDeviceClass.ENUM, options=FAN_STEP_OPTIONS, entity_category=EntityCategory.DIAGNOSTIC),
     HeruSensorDescription(key="current_supply_fan_step", translation_key="current_supply_fan_step", register_index=22, value_fn=_fan_speed_option, device_class=SensorDeviceClass.ENUM, options=FAN_STEP_OPTIONS, entity_category=EntityCategory.DIAGNOSTIC),
@@ -88,7 +89,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     """Set up Heru sensors from a config entry."""
     coordinator: HeruDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[SensorEntity] = [
-        HeruSensorEntity(coordinator, entry, description) for description in SENSOR_DESCRIPTIONS
+        SENSOR_CLASSES.get(description.key, HeruSensorEntity)(coordinator, entry, description)
+        for description in SENSOR_DESCRIPTIONS
     ]
     entities.append(HeruSystemTimeSensor(coordinator, entry))
     async_add_entities(entities)
@@ -123,6 +125,45 @@ class HeruSensorEntity(CoordinatorEntity[HeruDataUpdateCoordinator], SensorEntit
         if self.entity_description.scale == 1.0:
             return int(scaled_value)
         return round(scaled_value, 1)
+
+
+class HeruFilterDaysLeftSensor(HeruSensorEntity):
+    """Days until the filter change is due.
+
+    3x00020 reads 0 in two situations that are not a countdown of no days
+    left: the filter timer is off (4x00044 = 0), and a unit whose firmware
+    answers for the register without ever populating it, which is what a
+    HERU 62-250 Gen 3 does even with a period set, the timer reset and no
+    filter alarm raised. Neither is a duration, so report nothing rather
+    than a permanent 0 days.
+
+    A filter that really is due is reported by the filter alarms, which the
+    alarm entity already covers, so nothing is lost by not reporting 0 here.
+    The attributes carry the timer's configuration, because 1 - 5 months
+    disables the timer on this unit rather than shortening it.
+    """
+
+    @property
+    def _period(self) -> int | None:
+        """Return the configured filter change period in months."""
+        return self.coordinator.config_register(HOLDING_REGISTER_FILTER_CHANGE_PERIOD)
+
+    @property
+    def native_value(self):
+        """Return the days left, or nothing when the unit reports no count."""
+        value = super().native_value
+        return None if value == 0 else value
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the filter timer's configuration."""
+        period = self._period
+        if period is None:
+            return None
+        return {
+            "filter_change_period_months": period,
+            "filter_timer_running": period != 0,
+        }
 
 
 class HeruSystemTimeSensor(CoordinatorEntity[HeruDataUpdateCoordinator], SensorEntity):
@@ -198,3 +239,9 @@ class HeruSystemTimeSensor(CoordinatorEntity[HeruDataUpdateCoordinator], SensorE
             "seconds": seconds,
             "drift_seconds": drift,
         }
+
+
+# Entities that need behaviour beyond a scaled register read.
+SENSOR_CLASSES: dict[str, type[HeruSensorEntity]] = {
+    "filter_days_left": HeruFilterDaysLeftSensor,
+}
