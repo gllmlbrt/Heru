@@ -17,6 +17,7 @@ from homeassistant.util import dt as dt_util
 from .const import (
     DOMAIN,
     HOLDING_REGISTER_CLOCK_HOURS,
+    HOLDING_REGISTER_FILTER_CHANGE_PERIOD,
     HOLDING_REGISTER_CLOCK_MINUTES,
     HOLDING_REGISTER_CLOCK_SECONDS,
     HOLDING_REGISTER_CLOCK_WEEKDAY,
@@ -88,7 +89,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     """Set up Heru sensors from a config entry."""
     coordinator: HeruDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[SensorEntity] = [
-        HeruSensorEntity(coordinator, entry, description) for description in SENSOR_DESCRIPTIONS
+        SENSOR_CLASSES.get(description.key, HeruSensorEntity)(coordinator, entry, description)
+        for description in SENSOR_DESCRIPTIONS
     ]
     entities.append(HeruSystemTimeSensor(coordinator, entry))
     async_add_entities(entities)
@@ -123,6 +125,40 @@ class HeruSensorEntity(CoordinatorEntity[HeruDataUpdateCoordinator], SensorEntit
         if self.entity_description.scale == 1.0:
             return int(scaled_value)
         return round(scaled_value, 1)
+
+
+class HeruFilterDaysLeftSensor(HeruSensorEntity):
+    """Days until the filter change is due.
+
+    The countdown only runs while the filter timer is on. With the filter
+    change period (4x00044) at 0 the unit leaves 3x00020 at 0 whatever else is
+    set, so report no value instead of a countdown that stands still. The
+    period is also carried in the attributes, because 1 - 5 months disables
+    the timer on this unit rather than shortening it.
+    """
+
+    @property
+    def _period(self) -> int | None:
+        """Return the configured filter change period in months."""
+        return self.coordinator.config_register(HOLDING_REGISTER_FILTER_CHANGE_PERIOD)
+
+    @property
+    def native_value(self):
+        """Return the days left, or nothing while the timer is off."""
+        if self._period == 0:
+            return None
+        return super().native_value
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the filter timer's configuration."""
+        period = self._period
+        if period is None:
+            return None
+        return {
+            "filter_change_period_months": period,
+            "filter_timer_running": period != 0,
+        }
 
 
 class HeruSystemTimeSensor(CoordinatorEntity[HeruDataUpdateCoordinator], SensorEntity):
@@ -198,3 +234,9 @@ class HeruSystemTimeSensor(CoordinatorEntity[HeruDataUpdateCoordinator], SensorE
             "seconds": seconds,
             "drift_seconds": drift,
         }
+
+
+# Entities that need behaviour beyond a scaled register read.
+SENSOR_CLASSES: dict[str, type[HeruSensorEntity]] = {
+    "filter_days_left": HeruFilterDaysLeftSensor,
+}

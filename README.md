@@ -146,6 +146,18 @@ something the integration hides.
 Home Assistant renders the month unit as `m`, which reads like minutes next
 to the duration entities. The value is months.
 
+**Filter days left** (`3x00020`) is the countdown that period drives, and it
+only moves while the timer is on. With the period at `0` the unit parks the
+register at `0`, so the sensor reports nothing rather than a countdown of
+zero days that is not running. Its attributes carry
+`filter_change_period_months` and `filter_timer_running` so the reason is
+visible on the entity itself.
+
+If the sensor still reads `0` with a period of 6 to 12 set, the timer has not
+been started: press **Reset filter timer** (`0x00006`) once, which is what
+sets the countdown to the configured period. The unit recomputes the days
+itself; the integration only reads the register.
+
 ## The unit's clock
 
 The unit keeps a weekday and a time of day, but no date, so **System time**
